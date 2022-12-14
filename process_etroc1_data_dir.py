@@ -84,10 +84,6 @@ def script_main(
                                         if board_id is None:
                                             continue
 
-                                        #pixel_str = "pixel{}_id".format(board_id)
-                                        #inj_charge_str = "board{}_injected_charge".format(board_id)
-                                        #discr_str = "board{}_discriminator_threshold".format(board_id)
-
                                         if board_id == 3:
                                             board_id = 2
                                         combined_df["pixel_id"][idx] = info[3 + board_id*3]
@@ -95,16 +91,6 @@ def script_main(
                                         combined_df["board_discriminator_threshold"][idx] = info[5 + board_id*3][3:]
 
                                     combined_df = combined_df.dropna()
-
-                                    #combined_df["pixel0_id"] = info[3]
-                                    #combined_df["board0_injected_charge"] = info[4][4:]
-                                    #combined_df["board0_discriminator_threshold"] = info[5][3:]
-                                    #combined_df["pixel1_id"] = info[6]
-                                    #combined_df["board1_injected_charge"] = info[7][4:]
-                                    #combined_df["board1_discriminator_threshold"] = info[8][3:]
-                                    #combined_df["pixel3_id"] = info[9]
-                                    #combined_df["board3_injected_charge"] = info[10][4:]
-                                    #combined_df["board3_discriminator_threshold"] = info[11][3:]
 
                                     script_logger.info('Saving run {} summary data into database...'.format(file_base_name))
                                     combined_df.to_sql('combined_etroc1_data',
