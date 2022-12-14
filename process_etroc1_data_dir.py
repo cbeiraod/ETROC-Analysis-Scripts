@@ -44,9 +44,8 @@ def script_main(
                 process_single_run(path, file_directory, keep_only_triggers, add_extra_data=False, drop_old_data=False)
 
                 # Build a basic cuts.csv file
-                with RM.RunManager(file_directory) as Goku:
-                    with (Goku.path_directory/"cuts.csv").open("w") as cuts_file:
-                        cuts_file.write("calibration_code,<,200")
+                with (file_directory/"cuts.csv").open("w") as cuts_file:
+                    cuts_file.write("calibration_code,<,200")
 
                 # Apply cuts
                 cut_single_run(file_directory, drop_old_data=False)
