@@ -82,6 +82,12 @@ def plot_etroc1_task(
             fig = px.scatter_matrix(
                 df,
                 dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"],
+                labels = {
+                    "time_over_threshold": "Time over Threshold",
+                    "time_of_arrival": "Time of Arrival",
+                    "calibration_code": "Calibration Code",
+                    "data_board_id_cat": "Board ID",
+                },
                 color='data_board_id_cat',
             )
             fig.update_traces(
@@ -94,6 +100,31 @@ def plot_etroc1_task(
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
+
+            for board_id in df["data_board_id"].unique():
+                board_df = df.loc[df["data_board_id"] == board_id]
+
+                fig = px.density_heatmap(
+                    board_df,
+                    x="time_over_threshold",
+                    y="time_of_arrival",
+                    labels = {
+                        "time_over_threshold": "Time over Threshold",
+                        "time_of_arrival": "Time of Arrival",
+                        "data_board_id": "Board ID",
+                    },
+                    # marginal_x="histogram",
+                    # marginal_y="histogram",
+                    # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
+                    facet_col='data_board_id',
+                    facet_col_wrap=2,
+                )
+
+                fig.write_html(
+                    Picasso.task_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
+                    full_html = False, # For saving a html containing only a div with the plot
+                    include_plotlyjs = 'cdn',
+                )
 
 
 if __name__ == '__main__':
