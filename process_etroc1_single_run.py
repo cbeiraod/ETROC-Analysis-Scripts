@@ -43,7 +43,18 @@ def script_main(
             info = str(input_file.name).split('_')
 
             with sqlite3.connect(data_dir/'data.sqlite') as sqlite3_connection:
-                df = pandas.read_csv(input_file, header=None, delim_whitespace=True, names=["data_board_id", "time_of_arrival", "time_over_threshold", "calibration_code", "hit_flag"])
+                df = pandas.read_csv(
+                    input_file,
+                    header=None,
+                    delim_whitespace=True,
+                    names=[
+                        "data_board_id",
+                        "time_of_arrival",
+                        "time_over_threshold",
+                        "calibration_code",
+                        "hit_flag",
+                    ]
+                )
 
                 # TODO open other splits of file
 
