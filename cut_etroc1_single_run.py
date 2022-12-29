@@ -8,7 +8,7 @@ import shutil
 import pandas
 import sqlite3
 
-from plot_etroc1_single_run import plot_etroc1
+from plot_etroc1_single_run import plot_etroc1_task
 
 def script_main(
         output_directory:Path,
@@ -53,7 +53,7 @@ def script_main(
                                   if_exists='replace')
 
         if Bob.task_completed("apply_cuts"):
-            plot_etroc1(Bob, "plot_after_cuts", Bob.get_task_path("apply_cuts")/"data.sqlite")
+            plot_etroc1_task(Bob, "plot_after_cuts", Bob.get_task_path("apply_cuts")/"data.sqlite")
 
 
 

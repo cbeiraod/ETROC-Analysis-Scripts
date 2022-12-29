@@ -10,7 +10,7 @@ import sqlite3
 
 import plotly.express as px
 
-def plot_etroc1(
+def plot_etroc1_task(
         Bob_Manager:RM.RunManager,
         task_name:str,
         data_file:Path,
