@@ -78,10 +78,11 @@ def plot_etroc1(
                 include_plotlyjs = 'cdn',
             )
 
+            df["data_board_id_cat"] = df["data_board_id"].astype(str)
             fig = px.scatter_matrix(
                 df,
                 dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"],
-                color='data_board_id',
+                color='data_board_id_cat',
             )
             fig.update_traces(
                 diagonal_visible=False,
