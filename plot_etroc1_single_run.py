@@ -116,8 +116,8 @@ def plot_etroc1_task(
                     # marginal_x="histogram",
                     # marginal_y="histogram",
                     # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
-                    facet_col='data_board_id',
-                    facet_col_wrap=2,
+                    # facet_col='data_board_id',
+                    # facet_col_wrap=2,
                 )
 
                 fig.write_html(
@@ -125,6 +125,28 @@ def plot_etroc1_task(
                     full_html = False, # For saving a html containing only a div with the plot
                     include_plotlyjs = 'cdn',
                 )
+
+            fig = px.density_heatmap(
+                df,
+                x="time_over_threshold",
+                y="time_of_arrival",
+                labels = {
+                    "time_over_threshold": "Time over Threshold",
+                    "time_of_arrival": "Time of Arrival",
+                    "data_board_id": "Board ID",
+                },
+                # marginal_x="histogram",
+                # marginal_y="histogram",
+                # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
+                facet_col='data_board_id',
+                facet_col_wrap=2,
+            )
+
+            fig.write_html(
+                Picasso.task_path/'TOT_vs_TOA.html',
+                full_html = False, # For saving a html containing only a div with the plot
+                include_plotlyjs = 'cdn',
+            )
 
 
 if __name__ == '__main__':
