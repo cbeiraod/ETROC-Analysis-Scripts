@@ -16,7 +16,11 @@ def make_plots(
     task_name: str,
     base_path: Path,
     full_html: bool = False,  # For saving a html containing only a div with the plot
+    extra_title: str = "",
 ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
     fig = px.histogram(
         df,
         x = 'calibration_code',
@@ -25,7 +29,7 @@ def make_plots(
             "count": "Counts",
         },
         color='data_board_id',
-        title = "Histogram of Calibration Code<br><sup>Run: {}</sup>".format(run_name),
+        title = "Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
     )
 
     fig.write_html(
@@ -42,7 +46,7 @@ def make_plots(
             "count": "Counts",
         },
         color='data_board_id',
-        title = "Histogram of Time of Arrival<br><sup>Run: {}</sup>".format(run_name),
+        title = "Histogram of Time of Arrival<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
     )
 
     fig.write_html(
@@ -59,7 +63,7 @@ def make_plots(
             "count": "Counts",
         },
         color='data_board_id',
-        title = "Histogram of Time over Threshold<br><sup>Run: {}</sup>".format(run_name),
+        title = "Histogram of Time over Threshold<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
     )
 
     fig.write_html(
@@ -79,6 +83,7 @@ def make_plots(
             "data_board_id_cat": "Board ID",
         },
         color='data_board_id_cat',
+        title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
     )
 
     fig.update_traces(
@@ -109,6 +114,7 @@ def make_plots(
             # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
             # facet_col='data_board_id',
             # facet_col_wrap=2,
+            title = "Histogram of TOT vs TOA<br><sup>Board {}; Run: {}{}</sup>".format(board_id, run_name, extra_title),
         )
 
         fig.write_html(
@@ -131,6 +137,7 @@ def make_plots(
         # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
         facet_col='data_board_id',
         facet_col_wrap=2,
+        title = "Histogram of TOT vs TOA<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
     )
     fig.write_html(
         base_path/'TOT_vs_TOA.html',
