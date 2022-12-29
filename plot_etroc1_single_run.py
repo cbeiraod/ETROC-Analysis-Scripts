@@ -10,23 +10,12 @@ import sqlite3
 
 import plotly.express as px
 
-def plot_etroc1_task(
-        Bob_Manager:RM.RunManager,
-        task_name:str,
-        data_file:Path,
-        drop_old_data:bool = False
-        ):
-
-    script_logger = logging.getLogger('run_plotter')
-
-    if not data_file.is_file():
-        script_logger.info("The data file should be an existing file")
-        return
-
-    with Bob_Manager.handle_task(task_name, drop_old_data=drop_old_data) as Picasso:
-        with sqlite3.connect(data_file) as sqlite3_connection:
-            df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection, index_col=None)
-
+def make_plots(
+    df: pandas.DataFrame,
+    run_name: str,
+    base_path: Path,
+    full_html: bool = False,
+):
             fig = px.histogram(
                 df,
                 x = 'calibration_code',
@@ -35,11 +24,11 @@ def plot_etroc1_task(
                     "count": "Counts",
                 },
                 color='data_board_id',
-                title = "Histogram of Calibration Code<br><sup>Run: {}</sup>".format(Bob_Manager.run_name),
+                title = "Histogram of Calibration Code<br><sup>Run: {}</sup>".format(run_name),
             )
 
             fig.write_html(
-                str(Picasso.task_path/'calibration_code_histogram.html'),
+                str(base_path/'calibration_code_histogram.html'),
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
@@ -52,11 +41,11 @@ def plot_etroc1_task(
                     "count": "Counts",
                 },
                 color='data_board_id',
-                title = "Histogram of Time of Arrival<br><sup>Run: {}</sup>".format(Bob_Manager.run_name),
+                title = "Histogram of Time of Arrival<br><sup>Run: {}</sup>".format(run_name),
             )
 
             fig.write_html(
-                str(Picasso.task_path/'time_of_arrival_histogram.html'),
+                str(base_path/'time_of_arrival_histogram.html'),
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
@@ -69,11 +58,11 @@ def plot_etroc1_task(
                     "count": "Counts",
                 },
                 color='data_board_id',
-                title = "Histogram of Time over Threshold<br><sup>Run: {}</sup>".format(Bob_Manager.run_name),
+                title = "Histogram of Time over Threshold<br><sup>Run: {}</sup>".format(run_name),
             )
 
             fig.write_html(
-                str(Picasso.task_path/'time_over_threshold_histogram.html'),
+                str(base_path/'time_over_threshold_histogram.html'),
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
@@ -96,7 +85,7 @@ def plot_etroc1_task(
             )
 
             fig.write_html(
-                Picasso.task_path/'multi_scatter.html',
+                base_path/'multi_scatter.html',
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
@@ -121,7 +110,7 @@ def plot_etroc1_task(
                 )
 
                 fig.write_html(
-                    Picasso.task_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
+                    base_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
                     full_html = False, # For saving a html containing only a div with the plot
                     include_plotlyjs = 'cdn',
                 )
@@ -143,10 +132,30 @@ def plot_etroc1_task(
             )
 
             fig.write_html(
-                Picasso.task_path/'TOT_vs_TOA.html',
+                base_path/'TOT_vs_TOA.html',
                 full_html = False, # For saving a html containing only a div with the plot
                 include_plotlyjs = 'cdn',
             )
+
+def plot_etroc1_task(
+        Bob_Manager:RM.RunManager,
+        task_name:str,
+        data_file:Path,
+        drop_old_data:bool = False
+        ):
+
+    script_logger = logging.getLogger('run_plotter')
+
+    if not data_file.is_file():
+        script_logger.info("The data file should be an existing file")
+        return
+
+    with Bob_Manager.handle_task(task_name, drop_old_data=drop_old_data) as Picasso:
+        with sqlite3.connect(data_file) as sqlite3_connection:
+            df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection, index_col=None)
+
+            make_plots(df, Picasso.run_name, Picasso.task_path)
+
 
 
 if __name__ == '__main__':
