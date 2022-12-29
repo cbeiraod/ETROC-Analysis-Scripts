@@ -14,7 +14,7 @@ def make_plots(
     df: pandas.DataFrame,
     run_name: str,
     base_path: Path,
-    full_html: bool = False,
+    full_html: bool = False,  # For saving a html containing only a div with the plot
 ):
             fig = px.histogram(
                 df,
@@ -29,7 +29,7 @@ def make_plots(
 
             fig.write_html(
                 str(base_path/'calibration_code_histogram.html'),
-                full_html = False, # For saving a html containing only a div with the plot
+                full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
 
@@ -46,7 +46,7 @@ def make_plots(
 
             fig.write_html(
                 str(base_path/'time_of_arrival_histogram.html'),
-                full_html = False, # For saving a html containing only a div with the plot
+                full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
 
@@ -63,7 +63,7 @@ def make_plots(
 
             fig.write_html(
                 str(base_path/'time_over_threshold_histogram.html'),
-                full_html = False, # For saving a html containing only a div with the plot
+                full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
 
@@ -86,7 +86,7 @@ def make_plots(
 
             fig.write_html(
                 base_path/'multi_scatter.html',
-                full_html = False, # For saving a html containing only a div with the plot
+                full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
 
@@ -111,7 +111,7 @@ def make_plots(
 
                 fig.write_html(
                     base_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
-                    full_html = False, # For saving a html containing only a div with the plot
+                    full_html = full_html,
                     include_plotlyjs = 'cdn',
                 )
 
@@ -133,7 +133,7 @@ def make_plots(
 
             fig.write_html(
                 base_path/'TOT_vs_TOA.html',
-                full_html = False, # For saving a html containing only a div with the plot
+                full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
 
