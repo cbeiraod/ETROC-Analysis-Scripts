@@ -20,7 +20,7 @@ def script_main(
     with RM.RunManager(output_directory.resolve()) as Bob:
         Bob.create_run(raise_error=False)
 
-        if Bob.task_completed("proccess_etroc1_data_run"):
+        if Bob.task_completed("proccess_etroc1_data_run") or Bob.task_completed("proccess_etroc1_data_run_txt"):
             with Bob.handle_task("apply_cuts", drop_old_data=drop_old_data) as Miso:
                 if not (Bob.path_directory/"cuts.csv").is_file():
                     script_logger.info("A cuts file is not defined for run {}".format(Bob.run_name))
@@ -37,8 +37,12 @@ def script_main(
 
                             if cut_info[1] == "<":
                                 input_df = input_df.loc[input_df[cut_info[0]] < int(cut_info[2])]
+                            elif cut_info[1] == "<=":
+                                input_df = input_df.loc[input_df[cut_info[0]] <= int(cut_info[2])]
                             elif cut_info[1] == ">":
                                 input_df = input_df.loc[input_df[cut_info[0]] > int(cut_info[2])]
+                            elif cut_info[1] == ">=":
+                                input_df = input_df.loc[input_df[cut_info[0]] >= int(cut_info[2])]
                             elif cut_info[1] == "=":
                                 input_df = input_df.loc[input_df[cut_info[0]] == int(cut_info[2])]
                             elif cut_info[1] == "str=":
