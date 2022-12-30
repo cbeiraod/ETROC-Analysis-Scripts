@@ -9,6 +9,7 @@ import pandas
 import sqlite3
 
 import plotly.express as px
+import plotly.graph_objects as go
 
 def make_plots(
     df: pandas.DataFrame,
@@ -111,10 +112,12 @@ def make_plots(
             },
             # marginal_x="histogram",
             # marginal_y="histogram",
-            # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
+            color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
             # facet_col='data_board_id',
             # facet_col_wrap=2,
             title = "Histogram of TOT vs TOA<br><sup>Board {}; Run: {}{}</sup>".format(board_id, run_name, extra_title),
+            # marginal_x='box',  # One of 'rug', 'box', 'violin', or 'histogram'
+            # marginal_y='box',
         )
 
         fig.write_html(
@@ -134,7 +137,7 @@ def make_plots(
         },
         # marginal_x="histogram",
         # marginal_y="histogram",
-        # color_continuous_scale="Viridis",  # https://plotly.com/python/builtin-colorscales/
+        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
         facet_col='data_board_id',
         facet_col_wrap=2,
         title = "Histogram of TOT vs TOA<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
