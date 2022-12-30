@@ -22,15 +22,19 @@ def make_plots(
     if extra_title != "":
         extra_title = "<br>" + extra_title
 
-    fig = px.histogram(
-        df,
-        x = 'calibration_code',
-        labels = {
-            "calibration_code": "Calibration Code",
-            "count": "Counts",
-        },
-        color='data_board_id',
-        title = "Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["calibration_code"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Calibration Code', # xaxis label
+        yaxis_title_text='Count', # yaxis label
     )
 
     fig.write_html(
@@ -38,20 +42,46 @@ def make_plots(
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        str(base_path/'calibration_code_pdf.html'),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
 
-    fig = px.histogram(
-        df,
-        x = 'time_of_arrival',
-        labels = {
-            "time_of_arrival": "Time of Arrival",
-            "count": "Counts",
-        },
-        color='data_board_id',
-        title = "Histogram of Time of Arrival<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["time_of_arrival"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Time of Arrival<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Time of Arrival', # xaxis label
+        yaxis_title_text='Count', # yaxis label
     )
 
     fig.write_html(
         str(base_path/'time_of_arrival_histogram.html'),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        str(base_path/'time_of_arrival_pdf.html'),
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
