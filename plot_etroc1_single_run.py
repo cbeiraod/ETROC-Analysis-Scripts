@@ -56,19 +56,34 @@ def make_plots(
         include_plotlyjs = 'cdn',
     )
 
-    fig = px.histogram(
-        df,
-        x = 'time_over_threshold',
-        labels = {
-            "time_over_threshold": "Time over Threshold",
-            "count": "Counts",
-        },
-        color='data_board_id',
-        title = "Histogram of Time over Threshold<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["time_over_threshold"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Time over Threshold<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Time over Threshold', # xaxis label
+        yaxis_title_text='Count', # yaxis label
     )
 
     fig.write_html(
         str(base_path/'time_over_threshold_histogram.html'),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        str(base_path/'time_over_threshold_pdf.html'),
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
