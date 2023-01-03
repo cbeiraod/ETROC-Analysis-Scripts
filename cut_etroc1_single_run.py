@@ -26,9 +26,9 @@ def script_main(
                     script_logger.info("A cuts file is not defined for run {}".format(Bob.run_name))
                     shutil.copy(Bob.path_directory/"data"/'data.sqlite', Miso.task_path/"data.sqlite")
                 else:
-                    with (sqlite3.connect(Bob.path_directory/"data"/'data.sqlite') as input_sqlite3_connection,
-                          sqlite3.connect(Miso.task_path/"data.sqlite") as output_sqlite3_connection,
-                          (Bob.path_directory/"cuts.csv").open("r") as cut_file):
+                    with sqlite3.connect(Bob.path_directory/"data"/'data.sqlite') as input_sqlite3_connection, \
+                         sqlite3.connect(Miso.task_path/"data.sqlite") as output_sqlite3_connection, \
+                         (Bob.path_directory/"cuts.csv").open("r") as cut_file:
                         input_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
 
                         for cut_line in cut_file.readlines():
