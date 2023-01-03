@@ -147,6 +147,9 @@ def make_plots(
         include_plotlyjs = 'cdn',
     )
 
+    if len(df) == 0:  # The heatmaps (2D Histograms) seem to break when the dataframe has no data
+        return
+
     for board_id in df["data_board_id"].unique():
         board_df = df.loc[df["data_board_id"] == board_id]
 
