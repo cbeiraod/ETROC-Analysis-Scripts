@@ -12,7 +12,8 @@ from plot_etroc1_single_run import plot_etroc1_task
 
 def script_main(
         output_directory:Path,
-        drop_old_data:bool=False
+        drop_old_data:bool=False,
+        make_plots:bool=True
         ):
 
     script_logger = logging.getLogger('cut_run')
@@ -56,7 +57,7 @@ def script_main(
                                   #index=False,
                                   if_exists='replace')
 
-        if Bob.task_completed("apply_cuts"):
+        if Bob.task_completed("apply_cuts") and make_plots:
             plot_etroc1_task(Bob, "plot_after_cuts", Bob.get_task_path("apply_cuts")/"data.sqlite")
 
 

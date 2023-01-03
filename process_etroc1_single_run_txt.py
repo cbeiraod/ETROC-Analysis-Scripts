@@ -16,7 +16,8 @@ def script_main(
         keep_only_triggers:bool,
         ignore_rows=1,
         add_extra_data:bool=True,
-        drop_old_data:bool=False
+        drop_old_data:bool=False,
+        make_plots:bool=True
         ):
 
     script_logger = logging.getLogger('process_run')
@@ -108,8 +109,8 @@ def script_main(
                           #index=False,
                           if_exists='replace')
 
-        if Bob.task_completed("proccess_etroc1_data_run_txt"):
-            plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite")
+        if Bob.task_completed("proccess_etroc1_data_run_txt") and make_plots:
+            plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite", has_extra_data = add_extra_data)
 
 if __name__ == '__main__':
     import argparse
