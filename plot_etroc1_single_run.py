@@ -38,7 +38,7 @@ def make_plots(
     )
 
     fig.write_html(
-        str(base_path/'calibration_code_histogram.html'),
+        base_path/'calibration_code_histogram.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -49,7 +49,7 @@ def make_plots(
         yaxis_title_text='Probability', # yaxis label
     )
     fig.write_html(
-        str(base_path/'calibration_code_pdf.html'),
+        base_path/'calibration_code_pdf.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -70,10 +70,14 @@ def make_plots(
     )
 
     fig.write_html(
-        str(base_path/'time_of_arrival_histogram.html'),
+        base_path/'time_of_arrival_histogram.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
+    #fig.write_image(
+    #    file=base_path/'time_of_arrival_histogram.pdf',
+    #    format="pdf"
+    #)
     fig.update_traces(
         histnorm="probability"
     )
@@ -81,7 +85,7 @@ def make_plots(
         yaxis_title_text='Probability', # yaxis label
     )
     fig.write_html(
-        str(base_path/'time_of_arrival_pdf.html'),
+        base_path/'time_of_arrival_pdf.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -102,7 +106,7 @@ def make_plots(
     )
 
     fig.write_html(
-        str(base_path/'time_over_threshold_histogram.html'),
+        base_path/'time_over_threshold_histogram.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -113,7 +117,7 @@ def make_plots(
         yaxis_title_text='Probability', # yaxis label
     )
     fig.write_html(
-        str(base_path/'time_over_threshold_pdf.html'),
+        base_path/'time_over_threshold_pdf.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
