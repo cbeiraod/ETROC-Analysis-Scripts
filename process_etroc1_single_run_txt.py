@@ -116,7 +116,7 @@ def script_main(
         raise RuntimeError("The number of rows to ignore should be greater or equal to 0")
 
     with RM.RunManager(output_directory.resolve()) as Bob:
-        Bob.create_run(raise_error=False)
+        Bob.create_run(raise_error=True)
 
         proccess_etroc1_txt_run_task(
             Bob,
