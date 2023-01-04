@@ -112,9 +112,9 @@ def plot_combined_task(
                 combined_df = combined_df.sort_values(by=['board_discriminator_threshold', 'data_board_id'])
 
                 fig = px.line(
-            		data_frame = combined_df,
-            		x = 'board_discriminator_threshold',
-		        	y = 'hits',
+                    data_frame = combined_df,
+                    x = 'board_discriminator_threshold',
+                    y = 'hits',
                     labels = {
                         "board_discriminator_threshold": "Discriminator Threshold [DAC Counts]",
                         "hits": "Hits",
@@ -125,8 +125,8 @@ def plot_combined_task(
                     line_dash="board_injected_charge",
                     #line_group="board_injected_charge",
                     title = "Discriminator Threshold DAC Scan<br><sup>Run: {}{}</sup>".format(AdaLovelace.run_name, extra_title),
-    		    	symbol = "board_injected_charge",
-	    	    )
+                    symbol = "board_injected_charge",
+                )
                 fig.write_html(
                     VanGogh.task_path/"DAC_Scan.html",
                     full_html = False, # For saving a html containing only a div with the plot
@@ -146,7 +146,7 @@ def plot_combined_task(
                     },
                     title = "Variable Correlations<br><sup>Run: {}{}</sup>".format(AdaLovelace.run_name, extra_title),
                     color="data_board_id_cat",
-    		    	symbol = "board_injected_charge",
+                    symbol = "board_injected_charge",
                 )
                 fig.update_traces(
                     diagonal_visible=False,
