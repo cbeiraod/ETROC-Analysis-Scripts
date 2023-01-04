@@ -108,7 +108,7 @@ def script_main(
         return
 
     with RM.RunManager(output_directory.resolve()) as Bob:
-        Bob.create_run(raise_error=False)
+        Bob.create_run(raise_error=True)
 
         proccess_etroc1_run_task(
             Bob,
