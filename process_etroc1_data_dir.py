@@ -84,9 +84,9 @@ def merge_runs_task(
                                     else:
                                         board_idx = board_id
 
-                                    run_df["pixel_id"][idx] = info[3 + board_idx*3]
-                                    run_df["board_injected_charge"][idx] = info[4 + board_idx*3][4:]
-                                    run_df["board_discriminator_threshold"][idx] = info[5 + board_idx*3][3:]
+                                    run_df.at[idx, 'pixel_id'] = info[3 + board_idx*3]
+                                    run_df.at[idx, 'board_injected_charge'] = info[4 + board_idx*3][4:]
+                                    run_df.at[idx, 'board_discriminator_threshold'] = info[5 + board_idx*3][3:]
 
                                 run_df["board_injected_charge"] = run_df["board_injected_charge"].astype("int16")  # TODO: Check if type is ok
                                 run_df["board_discriminator_threshold"] = run_df["board_discriminator_threshold"].astype("int16")  # TODO: Check if type is ok
