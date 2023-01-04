@@ -10,25 +10,15 @@ import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
 
-def script_main(
-        input_file:Path,
-        output_directory:Path,
-        keep_only_triggers:bool,
-        add_extra_data:bool=True,
-        drop_old_data:bool=False,
-        make_plots:bool=True
-        ):
-
-    script_logger = logging.getLogger('process_run')
-
-    if not input_file.is_file():
-        script_logger.info("The input file should be an existing file")
-        return
-
-    with RM.RunManager(output_directory.resolve()) as Bob:
-        Bob.create_run(raise_error=False)
-
-        with Bob.handle_task("proccess_etroc1_data_run", drop_old_data=drop_old_data) as Miso:
+def proccess_etroc1_run_task(
+    AdaLovelace: RM.RunManager,
+    script_logger: logging.Logger,
+    input_file: Path,
+    keep_only_triggers: bool,
+    add_extra_data:bool=True,
+    drop_old_data:bool=False,
+):
+    with AdaLovelace.handle_task("proccess_etroc1_data_run", drop_old_data=drop_old_data) as Miso:
             # Copied data location
             backup_data_dir = (Miso.task_path/'original_data').resolve()
             backup_data_dir.mkdir()
@@ -101,6 +91,33 @@ def script_main(
                           sqlite3_connection,
                           index=False,
                           if_exists='replace')
+
+def script_main(
+        input_file:Path,
+        output_directory:Path,
+        keep_only_triggers:bool,
+        add_extra_data:bool=True,
+        drop_old_data:bool=False,
+        make_plots:bool=True
+        ):
+
+    script_logger = logging.getLogger('process_run')
+
+    if not input_file.is_file():
+        script_logger.info("The input file should be an existing file")
+        return
+
+    with RM.RunManager(output_directory.resolve()) as Bob:
+        Bob.create_run(raise_error=False)
+
+        proccess_etroc1_run_task(
+            Bob,
+            script_logger=script_logger,
+            input_file=input_file,
+            keep_only_triggers=keep_only_triggers,
+            add_extra_data=add_extra_data,
+            drop_old_data=drop_old_data,
+        )
 
         if Bob.task_completed("proccess_etroc1_data_run") and make_plots:
             plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite")
