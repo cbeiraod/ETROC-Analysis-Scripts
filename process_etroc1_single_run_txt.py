@@ -19,80 +19,79 @@ def proccess_etroc1_txt_run_task(
     add_extra_data:bool=True,
     drop_old_data:bool=False,
 ):
+    with AdaLovelace.handle_task("proccess_etroc1_data_run_txt", drop_old_data=drop_old_data) as Miso:
+        # Copied data location
+        backup_data_dir = Miso.task_path.resolve()/'original_data'
+        backup_data_dir.mkdir()
 
-        with Bob.handle_task("proccess_etroc1_data_run_txt", drop_old_data=drop_old_data) as Miso:
-            # Copied data location
-            backup_data_dir = (Miso.task_path/'original_data').resolve()
-            backup_data_dir.mkdir()
+        # Copy and save original data
+        script_logger.info("Copying original data to backup location")
+        shutil.copy(input_file, backup_data_dir)
 
-            # Copy and save original data
-            script_logger.info("Copying original data to backup location")
-            shutil.copy(input_file, backup_data_dir)
+        # Create data directory
+        data_dir = Miso.path_directory/"data"
+        data_dir.mkdir()
 
-            # Create data directory
-            data_dir = Bob.path_directory/"data"
-            data_dir.mkdir()
+        info = str(input_file.name).split('_')
 
-            info = str(input_file.name).split('_')
+        with sqlite3.connect(data_dir/'data.sqlite') as sqlite3_connection:
+            df = pandas.read_csv(
+                input_file,
+                header=None,
+                delim_whitespace=True,
+                skiprows=ignore_rows,
+                names=[
+                    "data_board_id",
+                    "time_of_arrival",
+                    "time_over_threshold",
+                    "calibration_code",
+                    "hit_flag",
+                    "day",
+                    "time",
+                ]
+            )
 
-            with sqlite3.connect(data_dir/'data.sqlite') as sqlite3_connection:
-                df = pandas.read_csv(
-                    input_file,
-                    header=None,
-                    delim_whitespace=True,
-                    skiprows=ignore_rows,
-                    names=[
-                        "data_board_id",
-                        "time_of_arrival",
-                        "time_over_threshold",
-                        "calibration_code",
-                        "hit_flag",
-                        "day",
-                        "time",
-                    ]
-                )
+            if keep_only_triggers:
+                df = df.loc[df["hit_flag"] == 1]
 
-                if keep_only_triggers:
-                    df = df.loc[df["hit_flag"] == 1]
+            # Adjust types and sizes
+            df["data_board_id"] = df["data_board_id"].astype("int8")
+            df["time_of_arrival"] = df["time_of_arrival"].astype("int16")
+            df["time_over_threshold"] = df["time_over_threshold"].astype("int16")
+            df["calibration_code"] = df["calibration_code"].astype("int16")
+            df["hit_flag"] = df["hit_flag"].astype("bool")
 
-                # Adjust types and sizes
-                df["data_board_id"] = df["data_board_id"].astype("int8")
-                df["time_of_arrival"] = df["time_of_arrival"].astype("int16")
-                df["time_over_threshold"] = df["time_over_threshold"].astype("int16")
-                df["calibration_code"] = df["calibration_code"].astype("int16")
-                df["hit_flag"] = df["hit_flag"].astype("bool")
+            # Combine day and time into datetime
+            df["datetime"] = pandas.to_datetime(
+                df['day'].astype(str) + " " + df["time"],
+                format='%Y-%m-%d %H:%M:%S',
+            )
+            df.drop('day', axis=1, inplace=True)
+            df.drop('time', axis=1, inplace=True)
 
-                # Combine day and time into datetime
-                df["datetime"] = pandas.to_datetime(
-                    df['day'].astype(str) + " " + df["time"],
-                    format='%Y-%m-%d %H:%M:%S',
-                )
-                df.drop('day', axis=1, inplace=True)
-                df.drop('time', axis=1, inplace=True)
+            # print(df)
+            # print(df.dtypes)
 
-                # print(df)
-                # print(df.dtypes)
+            if add_extra_data:  # For now only add pixel names
+                df["pixel_id"] = None
+                for idx in range(len(df["data_board_id"])):
+                    board_id = df["data_board_id"][idx]
 
-                if add_extra_data:  # For now only add pixel names
-                    df["pixel_id"] = None
-                    for idx in range(len(df["data_board_id"])):
-                        board_id = df["data_board_id"][idx]
+                    if board_id is None:
+                        continue
+                    elif board_id == 3:  # Because the board numbering goes 0 - 1 - 3, but indexes are sequential
+                        board_idx = 2
+                    else:
+                        board_idx = board_id
 
-                        if board_id is None:
-                            continue
-                        elif board_id == 3:  # Because the board numbering goes 0 - 1 - 3, but indexes are sequential
-                            board_idx = 2
-                        else:
-                            board_idx = board_id
+                    # df["pixel_id"][idx] = info[board_idx]
+                    df.at[idx, 'pixel_id'] = info[board_idx]
 
-                        # df["pixel_id"][idx] = info[board_idx]
-                        df.at[idx, 'pixel_id'] = info[board_idx]
-
-                script_logger.info('Saving run metadata into database...')
-                df.to_sql('etroc1_data',
-                          sqlite3_connection,
-                          index=False,
-                          if_exists='replace')
+            script_logger.info('Saving run metadata into database...')
+            df.to_sql('etroc1_data',
+                      sqlite3_connection,
+                      index=False,
+                      if_exists='replace')
 
 def script_main(
         input_file:Path,
