@@ -204,7 +204,7 @@ def plot_etroc1_task(
         Bob_Manager:RM.RunManager,
         task_name:str,
         data_file:Path,
-        drop_old_data:bool = False,
+        drop_old_data:bool = True,
         extra_title: str = "",
         ):
 
