@@ -13,7 +13,7 @@ from plot_etroc1_single_run import plot_etroc1_task
 def apply_cuts_task(
     AdaLovelace: RM.RunManager,
     script_logger: logging.Logger,
-    drop_old_data:bool=False,
+    drop_old_data:bool=True,
 ):
     if AdaLovelace.task_completed("proccess_etroc1_data_run") or AdaLovelace.task_completed("proccess_etroc1_data_run_txt"):
         with AdaLovelace.handle_task("apply_cuts", drop_old_data=drop_old_data) as Miso:
