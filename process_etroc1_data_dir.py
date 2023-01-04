@@ -164,6 +164,7 @@ def script_main(
         output_directory:Path,
         keep_only_triggers:bool,
         make_plots:bool,
+        add_date:bool = True,
         ):
     script_logger = logging.getLogger('process_dir')
 
@@ -171,10 +172,13 @@ def script_main(
         script_logger.info("The input directory should be an existing directory")
         return
 
-    now = datetime.now() # current date and time
+    if add_date:
+        now = datetime.now() # current date and time
 
-    out_dir = output_directory.resolve()
-    out_dir = out_dir.parent / (now.strftime("%Y%m%d-") + out_dir.name)
+        out_dir = output_directory.resolve()
+        out_dir = out_dir.parent / (now.strftime("%Y%m%d-") + out_dir.name)
+    else:
+        out_dir = output_directory.resolve()
 
     with RM.RunManager(out_dir) as Guilherme:
         Guilherme.create_run(raise_error=True)
@@ -240,6 +244,13 @@ if __name__ == '__main__':
         action = 'store_true',
         dest = 'make_plots',
     )
+    parser.add_argument(
+        '-i',
+        '--inhibit_date',
+        help = "If set, the date will not be added to the start of the directory name",
+        action = 'store_true',
+        dest = 'inhibit_data',
+    )
 
     args = parser.parse_args()
 
@@ -259,4 +270,10 @@ if __name__ == '__main__':
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
 
-    script_main(Path(args.directory), Path(args.out_directory), not args.keep_all, args.make_plots)
+    script_main(
+        Path(args.directory),
+        Path(args.out_directory),
+        keep_only_triggers = not args.keep_all,
+        make_plots = args.make_plots,
+        add_date = not args.inhibit_date
+    )
