@@ -17,8 +17,7 @@ def make_plots(
     task_name: str,
     base_path: Path,
     full_html: bool = False,  # For saving a html containing only a div with the plot
-    extra_title: str = "",
-    has_extra_data:bool = False
+    extra_title: str = ""
 ):
     if extra_title != "":
         extra_title = "<br>" + extra_title
@@ -206,7 +205,6 @@ def plot_etroc1_task(
         task_name:str,
         data_file:Path,
         drop_old_data:bool = False,
-        has_extra_data:bool = False,
         extra_title: str = "",
         ):
 
@@ -220,7 +218,7 @@ def plot_etroc1_task(
         with sqlite3.connect(data_file) as sqlite3_connection:
             df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection, index_col=None)
 
-            make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title, has_extra_data=has_extra_data)
+            make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
 
 
 

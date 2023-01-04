@@ -103,7 +103,7 @@ def script_main(
                           if_exists='replace')
 
         if Bob.task_completed("proccess_etroc1_data_run") and make_plots:
-            plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite", has_extra_data = add_extra_data)
+            plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite")
 
 if __name__ == '__main__':
     import argparse
