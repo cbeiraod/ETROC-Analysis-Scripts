@@ -148,7 +148,7 @@ def plot_etroc1_combined_task(
             sqlite_file = VanGogh.get_task_path("merge_etroc1_runs")/'data.sqlite'
             with sqlite3.connect(sqlite_file) as sqlite3_connection:
                 combined_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', sqlite3_connection, index_col=None)
-                combined_df = combined_df.sort_values(by=['board_discriminator_threshold', 'data_board_id'])
+                combined_df = combined_df.sort_values(by=['data_board_id', 'board_discriminator_threshold'])
 
                 fig = px.line(
                     data_frame = combined_df,
@@ -225,17 +225,17 @@ def script_main(
         out_dir = output_directory.resolve()
 
     with RM.RunManager(out_dir) as Guilherme:
-        Guilherme.create_run(raise_error=False)
+        Guilherme.create_run(raise_error=True)
 
         run_files = [x for x in input_directory.iterdir() if x.is_file() and str(x)[-11:-4] == "Split_0"]
 
-        # process_etroc1_data_directory_task(
-        #     Guilherme,
-        #     script_logger=script_logger,
-        #     run_files=run_files,
-        #     keep_only_triggers=keep_only_triggers,
-        #     make_plots=make_plots,
-        # )
+        process_etroc1_data_directory_task(
+            Guilherme,
+            script_logger=script_logger,
+            run_files=run_files,
+            keep_only_triggers=keep_only_triggers,
+            make_plots=make_plots,
+        )
 
         merge_etroc1_runs_task(
             Guilherme,
