@@ -99,7 +99,7 @@ def script_main(
                 script_logger.info('Saving run metadata into database...')
                 df.to_sql('etroc1_data',
                           sqlite3_connection,
-                          #index=False,
+                          index=False,
                           if_exists='replace')
 
         if Bob.task_completed("proccess_etroc1_data_run") and make_plots:
