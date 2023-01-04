@@ -10,16 +10,11 @@ import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
 
-def script_main(
-        output_directory:Path,
-        drop_old_data:bool=False,
-        make_plots:bool=True
-        ):
-
-    script_logger = logging.getLogger('cut_run')
-
-    with RM.RunManager(output_directory.resolve()) as Bob:
-        Bob.create_run(raise_error=False)
+def apply_cuts_task(
+    AdaLovelace: RM.RunManager,
+    script_logger: logging.Logger,
+    drop_old_data:bool=False,
+):
 
         if Bob.task_completed("proccess_etroc1_data_run") or Bob.task_completed("proccess_etroc1_data_run_txt"):
             with Bob.handle_task("apply_cuts", drop_old_data=drop_old_data) as Miso:
@@ -58,6 +53,23 @@ def script_main(
                                   output_sqlite3_connection,
                                   #index=False,
                                   if_exists='replace')
+
+def script_main(
+        output_directory:Path,
+        drop_old_data:bool=False,
+        make_plots:bool=True
+        ):
+
+    script_logger = logging.getLogger('cut_run')
+
+    with RM.RunManager(output_directory.resolve()) as Bob:
+        Bob.create_run(raise_error=False)
+
+        apply_cuts_task(
+            Bob,
+            script_logger=script_logger,
+            drop_old_data=drop_old_data,
+        )
 
         if Bob.task_completed("apply_cuts") and make_plots:
             plot_etroc1_task(Bob, "plot_after_cuts", Bob.get_task_path("apply_cuts")/"data.sqlite")
