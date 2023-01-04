@@ -59,6 +59,8 @@ def proccess_etroc1_run_task(
             df["calibration_code"] = df["calibration_code"].astype("int16")
             df["hit_flag"] = df["hit_flag"].astype("bool")
 
+            df.reset_index(names="event", inplace=True)  # For charge injection, the event number is sequential
+
             if add_extra_data:
                 df["phase_adjust"] = info[2][8:]
                 df["phase_adjust"] = df["phase_adjust"].astype("int8")  # TODO: Check if type is ok
