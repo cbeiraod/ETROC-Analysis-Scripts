@@ -39,6 +39,11 @@ def process_etroc1_data_directory_task(
 def merge_etroc1_runs_task(
     AdaLovelace: RM.RunManager,
     script_logger: logging.Logger,
+    board0_default:int = 535,
+    board1_default:int = 720,
+    board3_default:int = 720,
+    filter_default:bool = True,
+    trigger_board:int = 0,
 ):
     if AdaLovelace.task_completed("process_etroc1_data_directory"):
         with AdaLovelace.handle_task("merge_etroc1_runs", drop_old_data=True) as Bento:
@@ -56,13 +61,47 @@ def merge_etroc1_runs_task(
 
                         if sqlite_file is not None:
                             info = str(Goku.path_directory.name).split('_')  # For retrieving metadata about the run later
+                            board0_threshold = int(info[5][3:])
+                            board1_threshold = int(info[8][3:])
+                            board3_threshold = int(info[11][3:])
 
                             with sqlite3.connect(sqlite_file) as sqlite3_connection_run:
                                 run_df = pandas.read_sql('SELECT data_board_id, COUNT(*) AS hits FROM etroc1_data GROUP BY data_board_id', sqlite3_connection_run, index_col=None)
-                                # TODO: add a flag to count hits only on one board
 
-                                if len(run_df) > 1:
-                                    print(run_df)
+                                if filter_default:
+                                    if len(run_df) == 0:  # Figure out which board is different from default and add a 0 hit entry
+                                        if board0_threshold != board0_default:  # It is board 0
+                                            run_df.loc[len(run_df.index)] = [0, 0]
+                                        elif board1_threshold != board1_default:  # It is board 1
+                                            run_df.loc[len(run_df.index)] = [1, 0]
+                                        elif board3_threshold != board3_default:  # It is board 3
+                                            run_df.loc[len(run_df.index)] = [3, 0]
+                                        else:  # WTF is going on?
+                                            script_logger.error("Something weird happened, there is an individual run with no threshold different from default and no data. Make sure the data taking parameters made sense. This is only possible if the threshold of the trigger board was set too high.")
+                                    elif len(run_df) > 1:  # There is data from the board of interest and others (probably trigger board and others with badly set threshold)
+                                        run_df.drop(run_df.index[run_df['data_board_id'] == trigger_board], inplace=True)
+                                        run_df.reset_index(drop=True, inplace=True)
+                                        if len(run_df) > 1:
+                                            script_logger.error("After removing the extra trigger board, there is still multiple boards in a single run. This is not yet correctly handled. Please consider the data plots with care or fix the code to handle this correctly")
+                                    else:  # There is data from only 1 board, but this may be from the trigger board and not the board of interest
+                                        if board0_threshold != board0_default:  # Data should be from board 0
+                                            if run_df["data_board_id"][0] != 0:  # if not from this board
+                                                run_df.drop(run_df.index[run_df['data_board_id'] == trigger_board], inplace=True)
+                                                run_df.reset_index(drop=True, inplace=True)
+                                                run_df.loc[len(run_df.index)] = [0, 0]
+                                        elif board1_threshold != board1_default:  # Data should be from board 1
+                                            if run_df["data_board_id"][0] != 1:  # if not from this board
+                                                run_df.drop(run_df.index[run_df['data_board_id'] == trigger_board], inplace=True)
+                                                run_df.reset_index(drop=True, inplace=True)
+                                                run_df.loc[len(run_df.index)] = [1, 0]
+                                        elif board3_threshold != board3_default:  # Data should be from board 3
+                                            if run_df["data_board_id"][0] != 3:  # if not from this board
+                                                run_df.drop(run_df.index[run_df['data_board_id'] == trigger_board], inplace=True)
+                                                run_df.reset_index(drop=True, inplace=True)
+                                                run_df.loc[len(run_df.index)] = [3, 0]
+                                        else:  # This is the data for the trigger board when it equals the default, keep it
+                                            if run_df["data_board_id"][0] != trigger_board:
+                                                script_logger.error("There is a problem... expecting data from trigger board only, but there was data from another board. Probably the default thresholds are improperly configured")
 
                                 run_df["hits"] = run_df["hits"].astype("int64")
                                 run_df["data_board_id"] = run_df["data_board_id"].astype("int8")
@@ -165,6 +204,11 @@ def script_main(
         keep_only_triggers:bool,
         make_plots:bool,
         add_date:bool = True,
+        board0_default:int = 535,
+        board1_default:int = 720,
+        board3_default:int = 720,
+        filter_default:bool = True,
+        trigger_board:int = 0,
         ):
     script_logger = logging.getLogger('process_dir')
 
@@ -181,21 +225,26 @@ def script_main(
         out_dir = output_directory.resolve()
 
     with RM.RunManager(out_dir) as Guilherme:
-        Guilherme.create_run(raise_error=True)
+        Guilherme.create_run(raise_error=False)
 
         run_files = [x for x in input_directory.iterdir() if x.is_file() and str(x)[-11:-4] == "Split_0"]
 
-        process_etroc1_data_directory_task(
-            Guilherme,
-            script_logger=script_logger,
-            run_files=run_files,
-            keep_only_triggers=keep_only_triggers,
-            make_plots=make_plots,
-        )
+        # process_etroc1_data_directory_task(
+        #     Guilherme,
+        #     script_logger=script_logger,
+        #     run_files=run_files,
+        #     keep_only_triggers=keep_only_triggers,
+        #     make_plots=make_plots,
+        # )
 
         merge_etroc1_runs_task(
             Guilherme,
             script_logger = script_logger,
+            board0_default = board0_default,
+            board1_default = board1_default,
+            board3_default = board3_default,
+            filter_default = filter_default,
+            trigger_board = trigger_board,
         )
 
         plot_etroc1_combined_task(
@@ -258,7 +307,50 @@ if __name__ == '__main__':
         '--inhibit_date',
         help = "If set, the date will not be added to the start of the directory name",
         action = 'store_true',
-        dest = 'inhibit_data',
+        dest = 'inhibit_date',
+    )
+    parser.add_argument(
+        '-b0',
+        '--board0_default',
+        metavar = 'int',
+        help = "The default value of the DAC threshold for board with ID 0",
+        default = "535",
+        dest = 'board0_default',
+        type = int,
+    )
+    parser.add_argument(
+        '-b1',
+        '--board1_default',
+        metavar = 'int',
+        help = "The default value of the DAC threshold for board with ID 1",
+        default = "720",
+        dest = 'board1_default',
+        type = int,
+    )
+    parser.add_argument(
+        '-b3',
+        '--board3_default',
+        metavar = 'int',
+        help = "The default value of the DAC threshold for board with ID 3",
+        default = "720",
+        dest = 'board3_default',
+        type = int,
+    )
+    parser.add_argument(
+        '-f',
+        '--filter_default',
+        help = "If set, the default values for the different boards will be used to filter out the data which is not being scanned",
+        action = 'store_true',
+        dest = 'filter_default',
+    )
+    parser.add_argument(
+        '-t',
+        '--trigger_board',
+        help = 'The ID of the board being used to trigger',
+        choices = [0, 1, 3],
+        default = 0,
+        dest = 'trigger_board',
+        type = int,
     )
 
     args = parser.parse_args()
@@ -284,5 +376,10 @@ if __name__ == '__main__':
         Path(args.out_directory),
         keep_only_triggers = not args.keep_all,
         make_plots = args.make_plots,
-        add_date = not args.inhibit_date
+        add_date = not args.inhibit_date,
+        board0_default = args.board0_default,
+        board1_default = args.board1_default,
+        board3_default = args.board3_default,
+        filter_default = args.filter_default,
+        trigger_board = args.trigger_board,
     )
