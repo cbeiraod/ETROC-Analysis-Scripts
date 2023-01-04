@@ -19,78 +19,78 @@ def proccess_etroc1_run_task(
     drop_old_data:bool=False,
 ):
     with AdaLovelace.handle_task("proccess_etroc1_data_run", drop_old_data=drop_old_data) as Miso:
-            # Copied data location
-            backup_data_dir = (Miso.task_path/'original_data').resolve()
-            backup_data_dir.mkdir()
+        # Copied data location
+        backup_data_dir = Miso.task_path.resolve()/'original_data'
+        backup_data_dir.mkdir()
 
-            # Copy and save original data
-            script_logger.info("Copying original data to backup location")
-            shutil.copy(input_file, backup_data_dir)
+        # Copy and save original data
+        script_logger.info("Copying original data to backup location")
+        shutil.copy(input_file, backup_data_dir)
 
-            # Create data directory
-            data_dir = Bob.path_directory/"data"
-            data_dir.mkdir()
+        # Create data directory
+        data_dir = Miso.path_directory.resolve()/"data"
+        data_dir.mkdir()
 
-            info = str(input_file.name).split('_')
+        info = str(input_file.name).split('_')
 
-            with sqlite3.connect(data_dir/'data.sqlite') as sqlite3_connection:
-                df = pandas.read_csv(
-                    input_file,
-                    header=None,
-                    delim_whitespace=True,
-                    names=[
-                        "data_board_id",
-                        "time_of_arrival",
-                        "time_over_threshold",
-                        "calibration_code",
-                        "hit_flag",
-                    ]
-                )
+        with sqlite3.connect(data_dir/'data.sqlite') as sqlite3_connection:
+            df = pandas.read_csv(
+                input_file,
+                header=None,
+                delim_whitespace=True,
+                names=[
+                    "data_board_id",
+                    "time_of_arrival",
+                    "time_over_threshold",
+                    "calibration_code",
+                    "hit_flag",
+                ]
+            )
 
-                # TODO open other splits of file
+            # TODO open other splits of file
 
-                if keep_only_triggers:
-                    df = df.loc[df["hit_flag"] == 1]
+            if keep_only_triggers:
+                df = df.loc[df["hit_flag"] == 1]
 
-                # Adjust types and sizes
-                df["data_board_id"] = df["data_board_id"].astype("int8")
-                df["time_of_arrival"] = df["time_of_arrival"].astype("int16")
-                df["time_over_threshold"] = df["time_over_threshold"].astype("int16")
-                df["calibration_code"] = df["calibration_code"].astype("int16")
-                df["hit_flag"] = df["hit_flag"].astype("bool")
+            # Adjust types and sizes
+            df["data_board_id"] = df["data_board_id"].astype("int8")
+            df["time_of_arrival"] = df["time_of_arrival"].astype("int16")
+            df["time_over_threshold"] = df["time_over_threshold"].astype("int16")
+            df["calibration_code"] = df["calibration_code"].astype("int16")
+            df["hit_flag"] = df["hit_flag"].astype("bool")
 
-                if add_extra_data:
-                    df["phase_adjust"] = info[2][8:]
-                    df["phase_adjust"] = df["phase_adjust"].astype("int8")  # TODO: Check if type is ok
+            if add_extra_data:
+                df["phase_adjust"] = info[2][8:]
+                df["phase_adjust"] = df["phase_adjust"].astype("int8")  # TODO: Check if type is ok
 
-                    df["pixel_id"] = None
-                    df["board_injected_charge"] = None
-                    df["board_discriminator_threshold"] = None
+                df["pixel_id"] = None
+                df["board_injected_charge"] = None
+                df["board_discriminator_threshold"] = None
 
-                    for idx in range(len(df["data_board_id"])):
-                        board_id = df["data_board_id"][idx]
+                for idx in range(len(df["data_board_id"])):
+                    board_id = df["data_board_id"][idx]
 
-                        if board_id is None:
-                            continue
-                        elif board_id == 3:  # Because the board numbering goes 0 - 1 - 3, but indexes are sequential
-                            board_idx = 2
-                        else:
-                            board_idx = board_id
+                    if board_id is None:
+                        continue
+                    elif board_id == 3:  # Because the board numbering goes 0 - 1 - 3, but indexes are sequential
+                        board_idx = 2
+                    else:
+                        board_idx = board_id
 
-                        base_info_idx = (board_idx + 1) * 3
-                        # df["pixel_id"][idx] = info[base_info_idx]
-                        df.at[idx, 'pixel_id'] = info[base_info_idx]
-                        df.at[idx, 'board_injected_charge'] = info[base_info_idx+1][4:]
-                        df.at[idx, 'board_discriminator_threshold'] = info[base_info_idx+2][3:]
+                    base_info_idx = (board_idx + 1) * 3
+                    # df["pixel_id"][idx] = info[base_info_idx]
+                    df.at[idx, 'pixel_id'] = info[base_info_idx]
+                    df.at[idx, 'board_injected_charge'] = info[base_info_idx+1][4:]
+                    df.at[idx, 'board_discriminator_threshold'] = info[base_info_idx+2][3:]
 
-                    df["board_injected_charge"] = df["board_injected_charge"].astype("int16")  # TODO: Check if type is ok
-                    df["board_discriminator_threshold"] = df["board_discriminator_threshold"].astype("int16")  # TODO: Check if type is ok
+                df["board_injected_charge"] = df["board_injected_charge"].astype("int16")  # TODO: Check if type is ok
+                df["board_discriminator_threshold"] = df["board_discriminator_threshold"].astype("int16")  # TODO: Check if type is ok
 
-                script_logger.info('Saving run metadata into database...')
-                df.to_sql('etroc1_data',
-                          sqlite3_connection,
-                          index=False,
-                          if_exists='replace')
+            script_logger.info('Saving run metadata into database...')
+            df.to_sql('etroc1_data',
+                      sqlite3_connection,
+                      index=False,
+                      if_exists='replace')
 
 def script_main(
         input_file:Path,
