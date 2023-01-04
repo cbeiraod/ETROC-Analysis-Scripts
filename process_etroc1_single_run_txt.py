@@ -10,30 +10,15 @@ import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
 
-def script_main(
-        input_file:Path,
-        output_directory:Path,
-        keep_only_triggers:bool,
-        ignore_rows=1,
-        add_extra_data:bool=True,
-        drop_old_data:bool=False,
-        make_plots:bool=True
-        ):
-
-    script_logger = logging.getLogger('process_run')
-
-    if not input_file.is_file():
-        script_logger.info("The input file should be an existing file")
-        return
-
-    if not isinstance(ignore_rows, int):
-        raise TypeError("The number of rows to ignore from the txt file should be an integer")
-
-    if ignore_rows < 0:
-        raise RuntimeError("The number of rows to ignore should be greater or equal to 0")
-
-    with RM.RunManager(output_directory.resolve()) as Bob:
-        Bob.create_run(raise_error=False)
+def proccess_etroc1_txt_run_task(
+    AdaLovelace: RM.RunManager,
+    script_logger: logging.Logger,
+    input_file: Path,
+    keep_only_triggers: bool,
+    ignore_rows:int=1,
+    add_extra_data:bool=True,
+    drop_old_data:bool=False,
+):
 
         with Bob.handle_task("proccess_etroc1_data_run_txt", drop_old_data=drop_old_data) as Miso:
             # Copied data location
@@ -108,6 +93,41 @@ def script_main(
                           sqlite3_connection,
                           index=False,
                           if_exists='replace')
+
+def script_main(
+        input_file:Path,
+        output_directory:Path,
+        keep_only_triggers:bool,
+        ignore_rows:int=1,
+        add_extra_data:bool=True,
+        drop_old_data:bool=False,
+        make_plots:bool=True
+        ):
+
+    script_logger = logging.getLogger('process_run')
+
+    if not input_file.is_file():
+        script_logger.info("The input file should be an existing file")
+        return
+
+    if not isinstance(ignore_rows, int):
+        raise TypeError("The number of rows to ignore from the txt file should be an integer")
+
+    if ignore_rows < 0:
+        raise RuntimeError("The number of rows to ignore should be greater or equal to 0")
+
+    with RM.RunManager(output_directory.resolve()) as Bob:
+        Bob.create_run(raise_error=False)
+
+        proccess_etroc1_txt_run_task(
+            Bob,
+            script_logger=script_logger,
+            input_file=input_file,
+            keep_only_triggers=keep_only_triggers,
+            ignore_rows=ignore_rows,
+            add_extra_data=add_extra_data,
+            drop_old_data=drop_old_data,
+        )
 
         if Bob.task_completed("proccess_etroc1_data_run_txt") and make_plots:
             plot_etroc1_task(Bob, "plot_before_cuts", Bob.path_directory/"data"/"data.sqlite")
