@@ -15,19 +15,19 @@ def apply_cuts_task(
     script_logger: logging.Logger,
     drop_old_data:bool=False,
 ):
+    if AdaLovelace.task_completed("proccess_etroc1_data_run") or AdaLovelace.task_completed("proccess_etroc1_data_run_txt"):
+        with AdaLovelace.handle_task("apply_cuts", drop_old_data=drop_old_data) as Miso:
+            if not (Miso.path_directory/"cuts.csv").is_file():
+                script_logger.info("A cuts file is not defined for run {}".format(AdaLovelace.run_name))
+                shutil.copy(Miso.path_directory/"data"/'data.sqlite', Miso.task_path/"data.sqlite")
+            else:
+                with sqlite3.connect(Miso.path_directory/"data"/'data.sqlite') as input_sqlite3_connection, \
+                     sqlite3.connect(Miso.task_path/"data.sqlite") as output_sqlite3_connection, \
+                     (Miso.path_directory/"cuts.csv").open("r") as cut_file:
 
-        if Bob.task_completed("proccess_etroc1_data_run") or Bob.task_completed("proccess_etroc1_data_run_txt"):
-            with Bob.handle_task("apply_cuts", drop_old_data=drop_old_data) as Miso:
-                if not (Bob.path_directory/"cuts.csv").is_file():
-                    script_logger.info("A cuts file is not defined for run {}".format(Bob.run_name))
-                    shutil.copy(Bob.path_directory/"data"/'data.sqlite', Miso.task_path/"data.sqlite")
-                else:
-                    with sqlite3.connect(Bob.path_directory/"data"/'data.sqlite') as input_sqlite3_connection, \
-                         sqlite3.connect(Miso.task_path/"data.sqlite") as output_sqlite3_connection, \
-                         (Bob.path_directory/"cuts.csv").open("r") as cut_file:
-                        input_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
+                    input_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
 
-                        for cut_line in cut_file.readlines():
+                    for cut_line in cut_file.readlines():
                             cut_info = cut_line.split(",")
                             cut_info = [val.strip() for val in cut_info]
 
@@ -48,11 +48,11 @@ def apply_cuts_task(
                             else:
                                 script_logger.error("unknown cut in cuts file: {}".format(cut_line))
 
-                        script_logger.info('Saving run metadata into database...')
-                        input_df.to_sql('etroc1_data',
-                                  output_sqlite3_connection,
-                                  #index=False,
-                                  if_exists='replace')
+                    script_logger.info('Saving run metadata into database...')
+                    input_df.to_sql('etroc1_data',
+                                    output_sqlite3_connection,
+                                    index=False,
+                                    if_exists='replace')
 
 def script_main(
         output_directory:Path,
