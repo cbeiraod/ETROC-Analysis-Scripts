@@ -185,14 +185,23 @@ def script_main(
 
         run_files = [x for x in input_directory.iterdir() if x.is_file() and str(x)[-11:-4] == "Split_0"]
 
-        process_etroc1_data_directory_task(Guilherme, script_logger=script_logger, run_files=run_files, keep_only_triggers=keep_only_triggers, make_plots=make_plots)
+        process_etroc1_data_directory_task(
+            Guilherme,
+            script_logger=script_logger,
+            run_files=run_files,
+            keep_only_triggers=keep_only_triggers,
+            make_plots=make_plots,
+        )
 
-        merge_runs_task(Guilherme, script_logger=script_logger)
+        merge_runs_task(
+            Guilherme,
+            script_logger=script_logger,
+        )
 
-        plot_combined_task(Guilherme, script_logger=script_logger)
-
-
-
+        plot_combined_task(
+            Guilherme,
+            script_logger=script_logger,
+        )
 
 if __name__ == '__main__':
     import argparse
