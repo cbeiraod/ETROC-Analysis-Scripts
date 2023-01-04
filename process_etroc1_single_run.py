@@ -137,9 +137,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-l',
         '--log-level',
-        help = 'Set the logging level',
+        help = 'Set the logging level. Default: WARNING',
         choices = ["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],
-        default = "ERROR",
+        default = "WARNING",
         dest = 'log_level',
     )
     parser.add_argument(
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         '-o',
         '--out-directory',
         metavar = 'path',
-        help = 'Path to the output directory for the run data.',
+        help = 'Path to the output directory for the run data. Default: ./out',
         default = "./out",
         dest = 'out_directory',
         type = str,
