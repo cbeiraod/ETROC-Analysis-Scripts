@@ -46,10 +46,12 @@ def script_main(
                                 input_df = input_df.loc[input_df[cut_info[0]] >= int(cut_info[2])]
                             elif cut_info[1] == "=":
                                 input_df = input_df.loc[input_df[cut_info[0]] == int(cut_info[2])]
+                            elif cut_info[1] == "<>":
+                                input_df = input_df.loc[input_df[cut_info[0]] != int(cut_info[2])]
                             elif cut_info[1] == "str=":
                                 input_df = input_df.loc[input_df[cut_info[0]] == cut_info[2]]
                             else:
-                                script_logger.error("unknown cut in cut file: {}".format(cut_line))
+                                script_logger.error("unknown cut in cuts file: {}".format(cut_line))
 
                         script_logger.info('Saving run metadata into database...')
                         input_df.to_sql('etroc1_data',
