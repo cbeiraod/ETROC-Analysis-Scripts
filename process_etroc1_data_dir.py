@@ -143,6 +143,9 @@ def plot_etroc1_combined_task(
     script_logger: logging.Logger,
     extra_title:str = "",
 ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
     if AdaLovelace.task_completed("merge_etroc1_runs"):
         with AdaLovelace.handle_task("plot_etroc1_combined", drop_old_data=True) as VanGogh:
             sqlite_file = VanGogh.get_task_path("merge_etroc1_runs")/'data.sqlite'
