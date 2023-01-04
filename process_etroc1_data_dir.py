@@ -36,12 +36,12 @@ def process_etroc1_data_directory_task(
             # Apply cuts
             cut_single_run(file_directory, drop_old_data=False, make_plots=make_plots)
 
-def merge_runs_task(
+def merge_etroc1_runs_task(
     AdaLovelace: RM.RunManager,
-    script_logger: logging.Logger
+    script_logger: logging.Logger,
 ):
     if AdaLovelace.task_completed("process_etroc1_data_directory"):
-        with AdaLovelace.handle_task("merge_runs", drop_old_data=True) as Bento:
+        with AdaLovelace.handle_task("merge_etroc1_runs", drop_old_data=True) as Bento:
             with sqlite3.connect(Bento.task_path/'data.sqlite') as sqlite3_connection:
                 run_paths = [x for x in (AdaLovelace.path_directory/"Individual_Runs").iterdir() if x.is_dir()]
                 for run_path in run_paths:
@@ -99,13 +99,13 @@ def merge_runs_task(
                                               index=False,
                                               if_exists='append')
 
-def plot_combined_task(
+def plot_etroc1_combined_task(
     AdaLovelace: RM.RunManager,
     script_logger: logging.Logger,
     extra_title:str = "",
 ):
-    if AdaLovelace.task_completed("merge_runs"):
-        with AdaLovelace.handle_task("plot_combined", drop_old_data=True) as VanGogh:
+    if AdaLovelace.task_completed("merge_etroc1_runs"):
+        with AdaLovelace.handle_task("plot_etroc1_combined", drop_old_data=True) as VanGogh:
             sqlite_file = VanGogh.get_task_path("merge_runs")/'data.sqlite'
             with sqlite3.connect(sqlite_file) as sqlite3_connection:
                 combined_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', sqlite3_connection, index_col=None)
@@ -193,12 +193,12 @@ def script_main(
             make_plots=make_plots,
         )
 
-        merge_runs_task(
+        merge_etroc1_runs_task(
             Guilherme,
-            script_logger=script_logger,
+            script_logger = script_logger,
         )
 
-        plot_combined_task(
+        plot_etroc1_combined_task(
             Guilherme,
             script_logger=script_logger,
         )
