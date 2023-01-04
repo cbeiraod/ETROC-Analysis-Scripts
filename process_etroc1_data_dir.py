@@ -41,7 +41,7 @@ def merge_runs_task(
     script_logger: logging.Logger
 ):
     if AdaLovelace.task_completed("process_etroc1_data_directory"):
-        with AdaLovelace.handle_task("merge_runs", drop_old_data=False) as Bento:
+        with AdaLovelace.handle_task("merge_runs", drop_old_data=True) as Bento:
             with sqlite3.connect(Bento.task_path/'data.sqlite') as sqlite3_connection:
                 run_paths = [x for x in (AdaLovelace.path_directory/"Individual_Runs").iterdir() if x.is_dir()]
                 for run_path in run_paths:
@@ -105,7 +105,7 @@ def plot_combined_task(
     extra_title:str = "",
 ):
     if AdaLovelace.task_completed("merge_runs"):
-        with AdaLovelace.handle_task("plot_combined", drop_old_data=False) as VanGogh:
+        with AdaLovelace.handle_task("plot_combined", drop_old_data=True) as VanGogh:
             sqlite_file = VanGogh.get_task_path("merge_runs")/'data.sqlite'
             with sqlite3.connect(sqlite_file) as sqlite3_connection:
                 combined_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', sqlite3_connection, index_col=None)
