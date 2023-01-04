@@ -6,9 +6,18 @@ import lip_pps_run_manager as RM
 import logging
 import shutil
 import pandas
+import numpy
+import numpy.typing
 import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
+
+# Rolling window match taken from: https://stackoverflow.com/a/49005205
+def rolling_window(array: numpy.typing.ArrayLike, window_size: int):
+    shape = array.shape[:-1] + (array.shape[-1] - window_size + 1, window_size)
+    strides = array.strides + (array.strides[-1],)
+    c = numpy.lib.stride_tricks.as_strided(array, shape=shape, strides=strides)
+    return c
 
 def proccess_etroc1_txt_run_task(
     AdaLovelace: RM.RunManager,
@@ -18,6 +27,7 @@ def proccess_etroc1_txt_run_task(
     ignore_rows:int=1,
     add_extra_data:bool=True,
     drop_old_data:bool=False,
+    pattern:list[int]=[0,1,3],
 ):
     with AdaLovelace.handle_task("proccess_etroc1_data_run_txt", drop_old_data=drop_old_data) as Miso:
         # Copied data location
@@ -72,6 +82,29 @@ def proccess_etroc1_txt_run_task(
             # print(df)
             # print(df.dtypes)
 
+            if pattern is not None and len(pattern) > 0:
+                arr = df['data_board_id'].values
+                N = len(pattern)
+                b = numpy.all(rolling_window(arr, N) == pattern, axis=1)
+                c = numpy.mgrid[0:len(b)][b]
+                d = [i  for x in c for i in range(x, x+N)]
+                df['pattern_match'] = numpy.in1d(numpy.arange(len(arr)), d)
+                del arr
+                del N
+                del b
+                del c
+                del d
+
+                df.drop(df.index[df['pattern_match'] == False], inplace=True)
+                df.reset_index(drop=True, inplace=True)
+
+                df.reset_index(names="event", inplace=True)
+                df["event"] = (df["event"]/len(pattern)).apply(numpy.floor).astype("int")
+
+                df.drop('pattern_match', axis=1, inplace=True)
+            else:
+                df.reset_index(names="event", inplace=True)
+
             if add_extra_data:  # For now only add pixel names
                 df["pixel_id"] = None
                 for idx in range(len(df["data_board_id"])):
@@ -100,7 +133,8 @@ def script_main(
         ignore_rows:int=1,
         add_extra_data:bool=True,
         drop_old_data:bool=False,
-        make_plots:bool=True
+        make_plots:bool=True,
+        pattern:list[int]=[0,1,3],
         ):
 
     script_logger = logging.getLogger('process_run')
@@ -126,6 +160,7 @@ def script_main(
             ignore_rows=ignore_rows,
             add_extra_data=add_extra_data,
             drop_old_data=drop_old_data,
+            pattern=pattern,
         )
 
         if Bob.task_completed("proccess_etroc1_data_run_txt") and make_plots:
@@ -173,8 +208,29 @@ if __name__ == '__main__':
         action = 'store_true',
         dest = 'keep_all',
     )
+    parser.add_argument(
+        '-p',
+        '--event_pattern',
+        help = "The pattern to be used in order to filter out actual events from all the data: 0 - No pattern; 1 (default) - [0,1,3]; 2 - [0,1]; 3 - [0,3]; 4 - [1,3]; 5 - [0,3,1]",
+        default = 1,
+        choices = [0,1,2,3,4,5],
+        dest = 'event_pattern',
+        type = int,
+    )
 
     args = parser.parse_args()
+
+    pattern = None
+    if args.event_pattern == 1:
+        pattern = [0,1,3]
+    elif args.event_pattern == 2:
+        pattern = [0,1]
+    elif args.event_pattern == 3:
+        pattern = [0,3]
+    elif args.event_pattern == 4:
+        pattern = [1,3]
+    elif args.event_pattern == 5:
+        pattern = [0,3,1]
 
     if args.log_file:
         logging.basicConfig(filename='logging.log', filemode='w', encoding='utf-8', level=logging.NOTSET)
@@ -192,4 +248,4 @@ if __name__ == '__main__':
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
 
-    script_main(Path(args.file), Path(args.out_directory), not args.keep_all)
+    script_main(Path(args.file), Path(args.out_directory), not args.keep_all, pattern=pattern)
