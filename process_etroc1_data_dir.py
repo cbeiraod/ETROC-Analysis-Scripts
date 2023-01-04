@@ -106,7 +106,7 @@ def plot_etroc1_combined_task(
 ):
     if AdaLovelace.task_completed("merge_etroc1_runs"):
         with AdaLovelace.handle_task("plot_etroc1_combined", drop_old_data=True) as VanGogh:
-            sqlite_file = VanGogh.get_task_path("merge_runs")/'data.sqlite'
+            sqlite_file = VanGogh.get_task_path("merge_etroc1_runs")/'data.sqlite'
             with sqlite3.connect(sqlite_file) as sqlite3_connection:
                 combined_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', sqlite3_connection, index_col=None)
                 combined_df = combined_df.sort_values(by=['board_discriminator_threshold', 'data_board_id'])
