@@ -9,7 +9,7 @@ import pandas
 import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
-from process_etroc1_data_dir import plot_etroc1_combined_task
+from process_etroc1_charge_injection_data_dir import plot_etroc1_combined_task
 
 def script_main(
         output_directory:Path,
