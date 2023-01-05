@@ -132,7 +132,7 @@ def script_main(
         keep_only_triggers:bool,
         ignore_rows:int=1,
         add_extra_data:bool=True,
-        drop_old_data:bool=False,
+        drop_old_data:bool=True,
         make_plots:bool=True,
         pattern:list[int]=[0,1,3],
         ):

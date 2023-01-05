@@ -99,7 +99,7 @@ def script_main(
         output_directory:Path,
         keep_only_triggers:bool,
         add_extra_data:bool=True,
-        drop_old_data:bool=False,
+        drop_old_data:bool=True,
         make_plots:bool=True
         ):
 
