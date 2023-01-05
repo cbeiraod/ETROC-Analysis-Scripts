@@ -41,6 +41,7 @@ def make_plots(
         xaxis_title_text='Calibration Code', # xaxis label
         yaxis_title_text='Count', # yaxis label
     )
+    fig.update_yaxes(type="log")
 
     fig.write_html(
         base_path/'calibration_code_histogram.html',
