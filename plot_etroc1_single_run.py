@@ -209,6 +209,7 @@ def plot_etroc1_task(
         Bob_Manager:RM.RunManager,
         task_name:str,
         data_file:Path,
+        filter_files:dict[Path] = {},
         drop_old_data:bool = True,
         extra_title: str = "",
         ):
@@ -223,9 +224,18 @@ def plot_etroc1_task(
         with sqlite3.connect(data_file) as sqlite3_connection:
             df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection, index_col=None)
 
+            for filter in filter_files:
+                if filter_files[filter].is_file():
+                    filter_df = pandas.read_feather(filter_files[filter])
+                    filter_df.set_index("event", inplace=True)
+
+                    if filter == "event":
+                        from cut_etroc1_single_run import apply_event_filter
+                        df = apply_event_filter(df, filter_df)
+                else:
+                    script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
+
             make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
-
-
 
 if __name__ == '__main__':
     print("This is not a standalone script to run, it is run automatically as a part of the other scripts")
