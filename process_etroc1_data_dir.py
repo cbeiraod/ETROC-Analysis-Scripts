@@ -8,7 +8,7 @@ import shutil
 from datetime import datetime
 import pandas
 import sqlite3
-from process_etroc1_single_run import script_main as process_single_run
+from process_etroc1_single_charge_injection_run import script_main as process_single_run
 from cut_etroc1_single_run import script_main as cut_single_run
 
 import plotly.express as px
