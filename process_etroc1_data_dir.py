@@ -56,9 +56,11 @@ def merge_etroc1_runs_task(
                             sqlite_file = Goku.path_directory/"data"/"data.sqlite"
                             with sqlite3.connect(sqlite_file) as sqlite3_connection_run:
                                 df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection_run, index_col=None)
+
                                 from cut_etroc1_single_run import apply_event_filter
                                 filter_df = pandas.read_feather(Goku.path_directory/"event_filter.fd")
                                 filter_df.set_index("event", inplace=True)
+
                                 df = apply_event_filter(df, filter_df)
 
                                 df.drop(df.index[df['accepted'] == False], inplace=True)  # Drop the False, i.e. keep the True
