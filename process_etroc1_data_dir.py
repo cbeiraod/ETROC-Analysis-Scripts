@@ -31,7 +31,7 @@ def process_etroc1_data_directory_task(
 
             # Build a basic cuts.csv file
             with (file_directory/"cuts.csv").open("w") as cuts_file:
-                cuts_file.write("board_id,variable,cut_type,cut_value,output")
+                cuts_file.write("board_id,variable,cut_type,cut_value,output\n")
                 cuts_file.write("*,calibration_code,<,200")
 
             # Apply cuts
@@ -52,8 +52,27 @@ def merge_etroc1_runs_task(
                 run_paths = [x for x in (AdaLovelace.path_directory/"Individual_Runs").iterdir() if x.is_dir()]
                 for run_path in run_paths:
                     with RM.RunManager(run_path) as Goku:
-                        if Goku.task_completed("apply_cuts"):
-                            sqlite_file = Goku.get_task_path("apply_cuts")/"data.sqlite"
+                        if Goku.task_completed("apply_event_cuts"):
+                            sqlite_file = Goku.path_directory/"data"/"data.sqlite"
+                            with sqlite3.connect(sqlite_file) as sqlite3_connection_run:
+                                df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection_run, index_col=None)
+                                from cut_etroc1_single_run import apply_event_filter
+                                filter_df = pandas.read_feather(Goku.path_directory/"event_filter.fd")
+                                filter_df.set_index("event", inplace=True)
+                                df = apply_event_filter(df, filter_df)
+
+                                df.drop(df.index[df['accepted'] == False], inplace=True)  # Drop the False, i.e. keep the True
+                                df.reset_index(drop=True, inplace=True)
+
+                                sqlite_file = Goku.path_directory/"data-filtered"/"data.sqlite"
+                                (Goku.path_directory/"data-filtered").mkdir(exist_ok=True)
+                                with sqlite3.connect(sqlite_file) as sqlite3_out_connection:
+                                    df.to_sql('etroc1_data',
+                                            sqlite3_out_connection,
+                                            index=False,
+                                            if_exists='replace')
+                                del df
+                                del filter_df
                         elif Goku.task_ran_successfully("proccess_etroc1_data_run"):
                             sqlite_file = Goku.path_directory/"data"/"data.sqlite"
                         else:
