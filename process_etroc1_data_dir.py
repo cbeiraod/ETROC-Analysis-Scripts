@@ -27,14 +27,15 @@ def process_etroc1_data_directory_task(
             file_directory = AdaLovelace.path_directory/"Individual_Runs"/file_base_name
 
             # Convert from RAW data format to our format
-            process_single_run(path, file_directory, keep_only_triggers, add_extra_data=False, drop_old_data=False, make_plots=make_plots)
+            process_single_run(path, file_directory, keep_only_triggers, add_extra_data=False, drop_old_data=True, make_plots=make_plots)
 
             # Build a basic cuts.csv file
             with (file_directory/"cuts.csv").open("w") as cuts_file:
-                cuts_file.write("calibration_code,<,200")
+                cuts_file.write("board_id,variable,cut_type,cut_value,output")
+                cuts_file.write("*,calibration_code,<,200")
 
             # Apply cuts
-            cut_single_run(file_directory, drop_old_data=False, make_plots=make_plots)
+            cut_single_run(file_directory, drop_old_data=True, make_plots=make_plots)
 
 def merge_etroc1_runs_task(
     AdaLovelace: RM.RunManager,
