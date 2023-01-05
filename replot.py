@@ -27,7 +27,7 @@ def script_main(
         if Geralt.task_completed("proccess_etroc1_data_run") or Geralt.task_completed("proccess_etroc1_data_run_txt"):
             plot_etroc1_task(Geralt, "plot_before_cuts", Geralt.path_directory/"data"/"data.sqlite", extra_title=extra_title)
             if Geralt.task_completed("apply_event_cuts"):
-                plot_etroc1_task(Geralt, "plot_after_cuts", Geralt.get_task_path("apply_cuts")/"data.sqlite", extra_title=extra_title, filter_files={"event": Geralt.path_directory/"event_filter.fd"})
+                plot_etroc1_task(Geralt, "plot_after_cuts", Geralt.path_directory/"data"/"data.sqlite", extra_title=extra_title, filter_files={"event": Geralt.path_directory/"event_filter.fd"})
 
 if __name__ == '__main__':
     import argparse
