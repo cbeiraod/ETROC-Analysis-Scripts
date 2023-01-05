@@ -20,6 +20,7 @@ Then install dependencies:
 python -m pip install lip-pps-run-manager
 python -m pip install plotly
 python -m pip install pandas
+python -m pip install pyarrow
 ```
 
 ## How to use
