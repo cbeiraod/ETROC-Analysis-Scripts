@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 def make_plots(
-    df: pandas.DataFrame,
+    original_df: pandas.DataFrame,
     run_name: str,
     task_name: str,
     base_path: Path,
@@ -21,6 +21,11 @@ def make_plots(
 ):
     if extra_title != "":
         extra_title = "<br>" + extra_title
+
+    if "accepted" in original_df:
+        df = original_df.query('accepted==True')
+    else:
+        df = original_df
 
     fig = go.Figure()
     for board_id in df["data_board_id"].unique():
