@@ -32,7 +32,7 @@ def process_etroc1_data_directory_task(
             # Build a basic cuts.csv file
             with (file_directory/"cuts.csv").open("w") as cuts_file:
                 cuts_file.write("board_id,variable,cut_type,cut_value,output\n")
-                cuts_file.write("*,calibration_code,<,200")
+                cuts_file.write("#,calibration_code,<,200")
 
             # Apply cuts
             cut_single_run(file_directory, drop_old_data=True, make_plots=make_plots)
