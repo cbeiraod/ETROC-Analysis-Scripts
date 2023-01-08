@@ -98,7 +98,7 @@ def apply_event_cuts(
     pivot_data_df = data_df.pivot(
         index = 'event',
         columns = 'data_board_id',
-        values = list(set(data_df.columns) - {'data_board_id'}),
+        values = list(set(data_df.columns) - {'data_board_id', 'event'}),
     )
 
     base_path = Johnny.task_path.resolve()/"CutflowPlots"
