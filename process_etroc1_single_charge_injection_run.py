@@ -51,6 +51,8 @@ def proccess_etroc1_run_task(
 
             if keep_only_triggers:
                 df = df.loc[df["hit_flag"] == 1]
+                df.reset_index(names="drop_me", inplace=True)
+                df.drop(columns=['drop_me'], inplace=True)
 
             # Adjust types and sizes
             df["data_board_id"] = df["data_board_id"].astype("int8")
