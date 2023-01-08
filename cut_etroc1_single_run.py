@@ -54,7 +54,7 @@ def df_apply_cut(
             else:
                 if board_id == "*":
                     full_cut &= cut
-                elif board_id == "*":
+                elif board_id == "#":
                     full_cut |= cut
                 else:  # WTF
                     raise RuntimeError("WTF is going on...")
