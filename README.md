@@ -21,6 +21,7 @@ python -m pip install lip-pps-run-manager
 python -m pip install plotly
 python -m pip install pandas
 python -m pip install pyarrow
+python -m pip install statsmodels
 ```
 
 ## How to use
