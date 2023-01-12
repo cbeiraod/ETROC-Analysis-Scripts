@@ -6,6 +6,7 @@ import lip_pps_run_manager as RM
 import logging
 import shutil
 import pandas
+import numpy
 import sqlite3
 
 import plotly.express as px
@@ -93,6 +94,9 @@ def plot_dac_vs_charge_task(
     if extra_title != "":
         extra_title = "<br>" + extra_title
 
+    from math import ceil
+    from math import floor
+
     if Oberon.task_completed("calculate_dac_points"):
         with Oberon.handle_task("plot_dac_vs_charge", drop_old_data=drop_old_data) as Matisse:
             with sqlite3.connect(Matisse.get_task_path("calculate_dac_points")/'data.sqlite') as sqlite3_connection:
@@ -103,6 +107,8 @@ def plot_dac_vs_charge_task(
                 for board_id in data_df["data_board_id"].unique():
                     board_data_df = data_df.loc[data_df["data_board_id"] == board_id]
                     noise_edges = noise_edges_df.loc[board_id]
+
+                    board_data_df["board_injected_charge"] = board_data_df["board_injected_charge"].astype(float)
 
                     fig = px.scatter(
                         board_data_df,
@@ -123,6 +129,9 @@ def plot_dac_vs_charge_task(
                     beta = model.iloc[0]["px_fit_results"].params[1]
                     rsq = model.iloc[0]["px_fit_results"].rsquared
 
+                    min_charge = (float(noise_edges["noise_max_dac"]) - alpha)/beta
+                    extra_charge = min(5,floor(min_charge))
+
                     fig.data[0].name = 'measurements'
                     fig.data[0].showlegend = True
                     fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
@@ -130,19 +139,27 @@ def plot_dac_vs_charge_task(
                     fig.data[1].line.color = 'green'
                     fig.data[1].line.dash = 'dash'
 
+                    # Add extra points to the fit so it extends to the noise region
+                    fig.data[1].y = numpy.insert(fig.data[1].y, 0, noise_edges["noise_max_dac"], axis=0)
+                    fig.data[1].x = numpy.insert(fig.data[1].x, 0, min_charge, axis=0)
+                    fig.data[1].y = numpy.insert(fig.data[1].y, 0, extra_charge*beta + alpha, axis=0)
+                    fig.data[1].x = numpy.insert(fig.data[1].x, 0, extra_charge, axis=0)
+
+                    min_charge = ceil(min_charge)
+
                     fig.add_hrect(
                         y0=noise_edges["noise_min_dac"],
                         y1=noise_edges["noise_max_dac"],
                         line_width=0,
                         fillcolor="red",
                         opacity=0.2,
-                        annotation_text="Noise: {}-{}".format(noise_edges["noise_min_dac"], noise_edges["noise_max_dac"]),
+                        annotation_text="Noise: {}-{}".format(floor(noise_edges["noise_min_dac"]), ceil(noise_edges["noise_max_dac"])),
                         annotation_position="top left",
                     )
 
-                    from math import ceil
                     threshold_str = ""
-                    for charge in [7,8,9]:
+                    charges = [min_charge + i for i in range(3)]
+                    for charge in charges:
                         threshold_str += "<br>{} fC: {}".format(charge, ceil(alpha + beta*charge))
 
                     fig.add_annotation(
@@ -152,6 +169,11 @@ def plot_dac_vs_charge_task(
                         x=0.02,
                         y=0.8,
                         showarrow=False,
+                        font=dict(
+                            #family="Courier New, monospace",
+                            size=16,
+                            #color="#ffffff"
+                        ),
                     )
 
                     fig.write_html(
@@ -159,14 +181,6 @@ def plot_dac_vs_charge_task(
                         full_html = False,
                         include_plotlyjs = 'cdn',
                     )
-
-                    print(board_id)
-                    print(board_data_df)
-                    print(noise_edges)
-                    print(noise_edges["noise_min_dac"])
-                    #print(noise_edges_df.at[board_id, ["noise_min_dac", "noise_max_dac"]])
-                #print(data_df)
-                #print(noise_edges_df)
 
 def script_main(
     output_directory:Path,
