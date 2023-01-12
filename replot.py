@@ -10,6 +10,7 @@ import sqlite3
 
 from plot_etroc1_single_run import plot_etroc1_task
 from process_etroc1_charge_injection_data_dir import plot_etroc1_combined_task
+from analyse_dac_vs_charge import plot_dac_vs_charge_task
 
 def script_main(
         output_directory:Path,
@@ -28,6 +29,9 @@ def script_main(
             plot_etroc1_task(Geralt, "plot_before_cuts", Geralt.path_directory/"data"/"data.sqlite", extra_title=extra_title)
             if Geralt.task_completed("apply_event_cuts"):
                 plot_etroc1_task(Geralt, "plot_after_cuts", Geralt.path_directory/"data"/"data.sqlite", extra_title=extra_title, filter_files={"event": Geralt.path_directory/"event_filter.fd"})
+
+        if Geralt.task_completed("calculate_dac_points"):
+            plot_dac_vs_charge_task(Geralt, script_logger=script_logger, extra_title=extra_title)
 
 if __name__ == '__main__':
     import argparse
