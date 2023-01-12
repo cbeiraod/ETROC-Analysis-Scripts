@@ -154,7 +154,7 @@ def plot_dac_vs_charge_task(
                         fillcolor="red",
                         opacity=0.2,
                         annotation_text="Noise: {}-{}".format(floor(noise_edges["noise_min_dac"]), ceil(noise_edges["noise_max_dac"])),
-                        annotation_position="top left",
+                        annotation_position="top right",
                     )
 
                     threshold_str = ""
