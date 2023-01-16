@@ -140,12 +140,29 @@ def make_plots(
         },
         color='data_board_id_cat',
         title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        opacity = 0.2,
     )
 
     fig.update_traces(
         diagonal_visible=False,
-        showupperhalf=False
+        showupperhalf=False,
+        marker = {'size': 3},
     )
+    for k in range(len(fig.data)):
+        fig.data[k].update(
+            selected = dict(
+                marker = dict(
+                    #opacity = 1,
+                    #color = 'blue',
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    #opacity = 0.1,
+                    color="grey"
+                )
+            ),
+        )
 
     fig.write_html(
         base_path/'multi_scatter.html',
