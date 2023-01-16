@@ -100,13 +100,14 @@ def plot_times_in_ns_task(
                 else:
                     script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
 
-            accepted_data_df = data_df.loc[data_df['accepted']==True]
+            if 'accepted' in data_df.columns:
+                data_df = data_df.loc[data_df['accepted']==True]
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
             extra_title = ""
 
-            for board_id in accepted_data_df["data_board_id"].unique():
-                board_df = accepted_data_df.loc[accepted_data_df["data_board_id"] == board_id]
+            for board_id in data_df["data_board_id"].unique():
+                board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
                 fig = px.density_heatmap(
                     board_df,
@@ -150,7 +151,7 @@ def plot_times_in_ns_task(
                 )
 
             fig = px.density_heatmap(
-                accepted_data_df,
+                data_df,
                 x="time_over_threshold_ns",
                 y="time_of_arrival_ns",
                 labels = {
@@ -171,14 +172,14 @@ def plot_times_in_ns_task(
                 include_plotlyjs = 'cdn',
             )
 
-            pivot_data_df = accepted_data_df.pivot(
+            pivot_data_df = data_df.pivot(
                 index = 'event',
                 columns = 'data_board_id',
-                values = list(set(accepted_data_df.columns) - {'data_board_id', 'event'}),
+                values = list(set(data_df.columns) - {'data_board_id', 'event'}),
             )
             pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
 
-            #df["data_board_id_cat"] = df["data_board_id"].astype(str)
+            #data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
             fig = px.scatter(
                 pivot_data_df,
                 x="time_of_arrival_ns_1",
