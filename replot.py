@@ -11,10 +11,13 @@ import sqlite3
 from plot_etroc1_single_run import plot_etroc1_task
 from process_etroc1_charge_injection_data_dir import plot_etroc1_combined_task
 from analyse_dac_vs_charge import plot_dac_vs_charge_task
+from analyse_time_resolution import plot_times_in_ns_task
 
 def script_main(
         output_directory:Path,
-        extra_title:str = ""
+        extra_title:str = "",
+        max_toa:float=14,
+        max_tot:float=14,
     ):
 
     script_logger = logging.getLogger('replotter')
@@ -32,6 +35,9 @@ def script_main(
 
         if Geralt.task_completed("calculate_dac_points"):
             plot_dac_vs_charge_task(Geralt, script_logger=script_logger, extra_title=extra_title)
+
+        if Geralt.task_completed("calculate_times_in_ns"):
+            plot_times_in_ns_task(Geralt, script_logger=script_logger, extra_title=extra_title, max_toa=max_toa, max_tot=max_tot)
 
 if __name__ == '__main__':
     import argparse
@@ -60,6 +66,24 @@ if __name__ == '__main__':
         dest = 'out_directory',
         type = str,
     )
+    parser.add_argument(
+        '-a',
+        '--max_toa',
+        metavar = 'int',
+        help = 'Maximum value of the time of arrival (in ns) for plotting. Default: 14',
+        default = 14,
+        dest = 'max_toa',
+        type = float,
+    )
+    parser.add_argument(
+        '-t',
+        '--max_tot',
+        metavar = 'int',
+        help = 'Maximum value of the time over threshold (in ns) for plotting. Default: 14',
+        default = 14,
+        dest = 'max_tot',
+        type = float,
+    )
 
     args = parser.parse_args()
 
@@ -79,4 +103,4 @@ if __name__ == '__main__':
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
 
-    script_main(Path(args.out_directory))
+    script_main(Path(args.out_directory), max_toa=args.max_toa, max_tot=args.max_tot)
