@@ -208,7 +208,29 @@ def script_main(
         plot_times_in_ns_task(
             Fermat,
             script_logger=script_logger,
-            task_name="preplot_times_in_ns",
+            task_name="plot_times_in_ns_before_cuts",
+            data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
+            filter_files={},
+            max_toa=max_toa,
+            max_tot=max_tot,
+        )
+
+        plot_times_in_ns_task(
+            Fermat,
+            script_logger=script_logger,
+            task_name="plot_times_in_ns_after_cuts",
+            data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
+            filter_files={"event": Fermat.path_directory/"event_filter.fd"},
+            max_toa=max_toa,
+            max_tot=max_tot,
+        )
+
+        # TODO: Add here cuts for cleaning TOA and other stuff
+
+        plot_times_in_ns_task(
+            Fermat,
+            script_logger=script_logger,
+            task_name="plot_times_in_ns_final",
             data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
             filter_files={"event": Fermat.path_directory/"event_filter.fd"},
             max_toa=max_toa,
