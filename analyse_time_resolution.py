@@ -100,8 +100,9 @@ def plot_times_in_ns_task(
                 else:
                     script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
 
+            full_df = data_df
             if 'accepted' in data_df.columns:
-                data_df = data_df.loc[data_df['accepted']==True]
+                data_df = full_df.loc[full_df['accepted']==True]
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
             extra_title = ""
