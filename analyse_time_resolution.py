@@ -179,13 +179,6 @@ def plot_times_in_ns_task(
                 include_plotlyjs = 'cdn',
             )
 
-            pivot_data_df = data_df.pivot(
-                index = 'event',
-                columns = 'data_board_id',
-                values = list(set(data_df.columns) - {'data_board_id', 'event'}),
-            )
-            pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
-
             data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
             fig = px.scatter_matrix(
                 data_df,
@@ -227,6 +220,13 @@ def plot_times_in_ns_task(
                 full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
+
+            pivot_data_df = data_df.pivot(
+                index = 'event',
+                columns = 'data_board_id',
+                values = list(set(data_df.columns) - {'data_board_id', 'event'}),
+            )
+            pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
 
             fig = px.scatter_matrix(
                 pivot_data_df,
