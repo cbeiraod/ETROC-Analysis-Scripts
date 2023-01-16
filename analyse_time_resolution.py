@@ -106,8 +106,13 @@ def plot_times_in_ns_task(
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
             extra_title = ""
+            toa_dimensions = []
+            toa_labels = {}
 
             for board_id in data_df["data_board_id"].unique():
+                toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
+                toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} Time of Arrival [ns]".format(board_id)
+
                 board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
                 fig = px.density_heatmap(
@@ -180,6 +185,81 @@ def plot_times_in_ns_task(
                 values = list(set(data_df.columns) - {'data_board_id', 'event'}),
             )
             pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
+
+            data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
+            fig = px.scatter_matrix(
+                data_df,
+                dimensions=["time_of_arrival", "time_over_threshold", "calibration_code", "time_of_arrival_ns", "time_over_threshold_ns"],
+                labels = {
+                    "time_over_threshold": "Time over Threshold [code]",
+                    "time_of_arrival": "Time of Arrival [code]",
+                    "time_over_threshold_ns": "Time over Threshold [ns]",
+                    "time_of_arrival_ns": "Time of Arrival [ns]",
+                    "calibration_code": "Calibration Code",
+                    "data_board_id_cat": "Board ID",
+                },
+                color='data_board_id_cat',
+                title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
+                opacity = 0.2,
+            )
+            fig.update_traces(
+                diagonal_visible=False,
+                showupperhalf=False,
+                marker = {'size': 3},
+            )
+            for k in range(len(fig.data)):
+                fig.data[k].update(
+                    selected = dict(
+                        marker = dict(
+                            #opacity = 1,
+                            #color = 'blue',
+                        )
+                    ),
+                    unselected = dict(
+                        marker = dict(
+                            #opacity = 0.1,
+                            color="grey"
+                        )
+                    ),
+                )
+            fig.write_html(
+                Monet.task_path/'multi_scatter.html',
+                full_html = full_html,
+                include_plotlyjs = 'cdn',
+            )
+
+            fig = px.scatter_matrix(
+                pivot_data_df,
+                dimensions = sorted(toa_dimensions),
+                labels = toa_labels,
+				title = 'TOA Correlation matrix<br><sup>Run: {}{}</sup>'.format(Monet.run_name, extra_title),
+                opacity = 0.15,
+            )
+            fig.update_traces(
+                diagonal_visible = False,
+                showupperhalf = False,
+                marker = {'size': 3},
+            )
+            for k in range(len(fig.data)):
+                fig.data[k].update(
+                    selected = dict(
+                        marker = dict(
+                            #opacity = 1,
+                            #color = 'blue',
+                        )
+                    ),
+                    unselected = dict(
+                        marker = dict(
+                            #opacity = 0.1,
+                            color="grey"
+                        )
+                    ),
+                )
+            fig.write_html(
+                Monet.task_path/'toa_correlation_matrix.html',
+                full_html = full_html,
+                include_plotlyjs = 'cdn',
+            )
 
             #data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
             fig = px.scatter(
