@@ -66,9 +66,9 @@ def apply_event_filter(data_df: pandas.DataFrame, filter_df: pandas.DataFrame):
     reindexed_data_df = data_df.set_index('event')
     reindexed_data_df["event_filter"] = filter_df
     if "accepted" not in reindexed_data_df:
-        reindexed_data_df["accepted"] = filter_df
+        reindexed_data_df["accepted"] = reindexed_data_df["event_filter"]
     else:
-        reindexed_data_df["accepted"] &= filter_df
+        reindexed_data_df["accepted"] &= reindexed_data_df["event_filter"]
     return reindexed_data_df.reset_index()
 
 def apply_event_cuts(
