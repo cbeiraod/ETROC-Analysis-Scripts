@@ -56,6 +56,8 @@ def calculate_times_in_ns_task(
                                      #index=False,
                                      if_exists='replace')
 
+                data_df.drop(labels=['accepted', 'event_filter'], axis=1, inplace=True)
+
                 data_df.to_sql('etroc1_data',
                                output_sqlite3_connection,
                                index=False,
