@@ -45,6 +45,7 @@ def script_main(
                 filter_files={},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                extra_title=extra_title,
             )
             plot_times_in_ns_task(
                 Geralt,
@@ -54,6 +55,7 @@ def script_main(
                 filter_files={"event": Geralt.path_directory/"event_filter.fd"},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                extra_title=extra_title,
             )
             plot_times_in_ns_task(
                 Geralt,
@@ -63,6 +65,7 @@ def script_main(
                 filter_files={"event": Geralt.path_directory/"event_filter.fd"},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                extra_title=extra_title,
             )
 
 if __name__ == '__main__':
