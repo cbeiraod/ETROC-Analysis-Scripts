@@ -70,9 +70,19 @@ def plot_times_in_ns_task(
     drop_old_data:bool=True,
     extra_title: str = "",
     full_html:bool=False,
-    max_toa:float=14,
-    max_tot:float=14,
+    max_toa:float=0,
+    max_tot:float=0,
     ):
+    if max_tot is None or max_tot <= 0:
+        range_x = None
+    else:
+        range_x = [0, max_tot]
+
+    if max_toa is None or max_toa <= 0:
+        range_y = None
+    else:
+        range_y = [0, max_toa]
+
     with Fermat.handle_task(task_name, drop_old_data=drop_old_data) as Monet:
         with sqlite3.connect(data_file) as input_sqlite3_connection:
             data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
@@ -92,8 +102,6 @@ def plot_times_in_ns_task(
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
             extra_title = ""
-            range_x = [0, max_tot]
-            range_y = [0, max_toa]
 
             for board_id in accepted_data_df["data_board_id"].unique():
                 board_df = accepted_data_df.loc[accepted_data_df["data_board_id"] == board_id]
@@ -129,8 +137,8 @@ def plot_times_in_ns_task(
                         "data_board_id": "Board ID",
                     },
                     title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                    #range_x=range_x,
-                    #range_y=range_y,
+                    range_x=range_x,
+                    range_y=range_y,
                 )
 
                 fig.write_html(
@@ -191,8 +199,8 @@ def plot_times_in_ns_task(
 def script_main(
     output_directory:Path,
     make_plots:bool=True,
-    max_toa:float=14,
-    max_tot:float=14,
+    max_toa:float=0,
+    max_tot:float=0,
     ):
 
     script_logger = logging.getLogger('apply_event_cuts')
@@ -268,8 +276,8 @@ if __name__ == '__main__':
         '-a',
         '--max_toa',
         metavar = 'int',
-        help = 'Maximum value of the time of arrival (in ns) for plotting. Default: 14',
-        default = 14,
+        help = 'Maximum value of the time of arrival (in ns) for plotting. Default: 0 (automatically calculated)',
+        default = 0,
         dest = 'max_toa',
         type = float,
     )
@@ -277,8 +285,8 @@ if __name__ == '__main__':
         '-t',
         '--max_tot',
         metavar = 'int',
-        help = 'Maximum value of the time over threshold (in ns) for plotting. Default: 14',
-        default = 14,
+        help = 'Maximum value of the time over threshold (in ns) for plotting. Default: 0 (automatically calculated)',
+        default = 0,
         dest = 'max_tot',
         type = float,
     )

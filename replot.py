@@ -16,8 +16,8 @@ from analyse_time_resolution import plot_times_in_ns_task
 def script_main(
         output_directory:Path,
         extra_title:str = "",
-        max_toa:float=14,
-        max_tot:float=14,
+        max_toa:float=0,
+        max_tot:float=0,
     ):
 
     script_logger = logging.getLogger('replotter')
@@ -99,8 +99,8 @@ if __name__ == '__main__':
         '-a',
         '--max_toa',
         metavar = 'int',
-        help = 'Maximum value of the time of arrival (in ns) for plotting. Default: 14',
-        default = 14,
+        help = 'Maximum value of the time of arrival (in ns) for plotting. Default: 0 (automatically calculated)',
+        default = 0,
         dest = 'max_toa',
         type = float,
     )
@@ -108,8 +108,8 @@ if __name__ == '__main__':
         '-t',
         '--max_tot',
         metavar = 'int',
-        help = 'Maximum value of the time over threshold (in ns) for plotting. Default: 14',
-        default = 14,
+        help = 'Maximum value of the time over threshold (in ns) for plotting. Default: 0 (automatically calculated)',
+        default = 0,
         dest = 'max_tot',
         type = float,
     )
