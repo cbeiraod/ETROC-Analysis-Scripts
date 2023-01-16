@@ -143,6 +143,7 @@ def plot_times_in_ns_task(
                     title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
                     range_x=range_x,
                     range_y=range_y,
+                    opacity=0.2,
                 )
 
                 fig.write_html(
