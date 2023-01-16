@@ -64,75 +64,42 @@ def calculate_times_in_ns_task(
 def plot_times_in_ns_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
+    task_name:str,
+    data_file:Path,
+    filter_files:dict[Path] = {},
     drop_old_data:bool=True,
     extra_title: str = "",
     full_html:bool=False,
     max_toa:float=14,
     max_tot:float=14,
     ):
-    if Fermat.task_completed("calculate_times_in_ns"):
-        with Fermat.handle_task("plot_times_in_ns", drop_old_data=drop_old_data) as Monet:
-            with sqlite3.connect(Monet.get_task_path("calculate_times_in_ns")/'data.sqlite') as input_sqlite3_connection:
-                data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
+    with Fermat.handle_task(task_name, drop_old_data=drop_old_data) as Monet:
+        with sqlite3.connect(data_file) as input_sqlite3_connection:
+            data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
 
-                filter_df = pandas.read_feather(Monet.path_directory/"event_filter.fd")
-                filter_df.set_index("event", inplace=True)
+            for filter in filter_files:
+                if filter_files[filter].is_file():
+                    filter_df = pandas.read_feather(filter_files[filter])
+                    filter_df.set_index("event", inplace=True)
 
-                from cut_etroc1_single_run import apply_event_filter
-                data_df = apply_event_filter(data_df, filter_df)
-                accepted_data_df = data_df.loc[data_df['accepted']==True]
-                #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
+                    if filter == "event":
+                        from cut_etroc1_single_run import apply_event_filter
+                        data_df = apply_event_filter(data_df, filter_df)
+                else:
+                    script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
 
-                extra_title = ""
-                range_x = [0, max_tot]
-                range_y = [0, max_toa]
+            accepted_data_df = data_df.loc[data_df['accepted']==True]
+            #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
-                for board_id in accepted_data_df["data_board_id"].unique():
-                    board_df = accepted_data_df.loc[accepted_data_df["data_board_id"] == board_id]
+            extra_title = ""
+            range_x = [0, max_tot]
+            range_y = [0, max_toa]
 
-                    fig = px.density_heatmap(
-                        board_df,
-                        x="time_over_threshold_ns",
-                        y="time_of_arrival_ns",
-                        labels = {
-                            "time_over_threshold_ns": "Time over Threshold [ns]",
-                            "time_of_arrival_ns": "Time of Arrival [ns]",
-                            "data_board_id": "Board ID",
-                        },
-                        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-                        title = "Histogram of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                        range_x=range_x,
-                        range_y=range_y,
-                    )
-
-                    fig.write_html(
-                        Monet.task_path/'Board{}_TOT_vs_TOA_ns.html'.format(board_id),
-                        full_html = full_html,
-                        include_plotlyjs = 'cdn',
-                    )
-
-                    fig = px.scatter(
-                        board_df,
-                        x="time_over_threshold_ns",
-                        y="time_of_arrival_ns",
-                        labels = {
-                            "time_over_threshold_ns": "Time over Threshold [ns]",
-                            "time_of_arrival_ns": "Time of Arrival [ns]",
-                            "data_board_id": "Board ID",
-                        },
-                        title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                        #range_x=range_x,
-                        #range_y=range_y,
-                    )
-
-                    fig.write_html(
-                        Monet.task_path/'Board{}_TOT_vs_TOA_ns_scatter.html'.format(board_id),
-                        full_html = full_html,
-                        include_plotlyjs = 'cdn',
-                    )
+            for board_id in accepted_data_df["data_board_id"].unique():
+                board_df = accepted_data_df.loc[accepted_data_df["data_board_id"] == board_id]
 
                 fig = px.density_heatmap(
-                    accepted_data_df,
+                    board_df,
                     x="time_over_threshold_ns",
                     y="time_of_arrival_ns",
                     labels = {
@@ -141,43 +108,84 @@ def plot_times_in_ns_task(
                         "data_board_id": "Board ID",
                     },
                     color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-                    facet_col='data_board_id',
-                    facet_col_wrap=2,
-                    title = "Histogram of TOT vs TOA in ns<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
+                    title = "Histogram of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
                     range_x=range_x,
                     range_y=range_y,
                 )
+
                 fig.write_html(
-                    Monet.task_path/'TOT_vs_TOA_ns.html',
+                    Monet.task_path/'Board{}_TOT_vs_TOA_ns.html'.format(board_id),
                     full_html = full_html,
                     include_plotlyjs = 'cdn',
                 )
 
-                pivot_data_df = accepted_data_df.pivot(
-                    index = 'event',
-                    columns = 'data_board_id',
-                    values = list(set(accepted_data_df.columns) - {'data_board_id', 'event'}),
-                )
-                pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
-
-                #df["data_board_id_cat"] = df["data_board_id"].astype(str)
                 fig = px.scatter(
-                    pivot_data_df,
-                    x="time_of_arrival_ns_1",
-                    y="time_over_threshold_ns_1",
+                    board_df,
+                    x="time_over_threshold_ns",
+                    y="time_of_arrival_ns",
                     labels = {
-                        "time_over_threshold_ns_1": "Board 1 Time over Threshold [ns]",
-                        "time_of_arrival_ns_1": "Board 1 Time of Arrival [ns]",
+                        "time_over_threshold_ns": "Time over Threshold [ns]",
+                        "time_of_arrival_ns": "Time of Arrival [ns]",
+                        "data_board_id": "Board ID",
                     },
-                    #color='data_board_id_cat',
-                    #title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                    title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
+                    #range_x=range_x,
+                    #range_y=range_y,
                 )
 
                 fig.write_html(
-                    Monet.task_path/'test_scatter.html',
+                    Monet.task_path/'Board{}_TOT_vs_TOA_ns_scatter.html'.format(board_id),
                     full_html = full_html,
                     include_plotlyjs = 'cdn',
                 )
+
+            fig = px.density_heatmap(
+                accepted_data_df,
+                x="time_over_threshold_ns",
+                y="time_of_arrival_ns",
+                labels = {
+                    "time_over_threshold_ns": "Time over Threshold [ns]",
+                    "time_of_arrival_ns": "Time of Arrival [ns]",
+                    "data_board_id": "Board ID",
+                },
+                color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+                facet_col='data_board_id',
+                facet_col_wrap=2,
+                title = "Histogram of TOT vs TOA in ns<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
+                range_x=range_x,
+                range_y=range_y,
+            )
+            fig.write_html(
+                Monet.task_path/'TOT_vs_TOA_ns.html',
+                full_html = full_html,
+                include_plotlyjs = 'cdn',
+            )
+
+            pivot_data_df = accepted_data_df.pivot(
+                index = 'event',
+                columns = 'data_board_id',
+                values = list(set(accepted_data_df.columns) - {'data_board_id', 'event'}),
+            )
+            pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
+
+            #df["data_board_id_cat"] = df["data_board_id"].astype(str)
+            fig = px.scatter(
+                pivot_data_df,
+                x="time_of_arrival_ns_1",
+                y="time_over_threshold_ns_1",
+                labels = {
+                    "time_over_threshold_ns_1": "Board 1 Time over Threshold [ns]",
+                    "time_of_arrival_ns_1": "Board 1 Time of Arrival [ns]",
+                },
+                #color='data_board_id_cat',
+                #title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+            )
+
+            fig.write_html(
+                Monet.task_path/'test_scatter.html',
+                full_html = full_html,
+                include_plotlyjs = 'cdn',
+            )
 
 
 def script_main(
@@ -197,7 +205,15 @@ def script_main(
 
         calculate_times_in_ns_task(Fermat, script_logger=script_logger)
 
-        plot_times_in_ns_task(Fermat, script_logger=script_logger, max_toa=max_toa, max_tot=max_tot)
+        plot_times_in_ns_task(
+            Fermat,
+            script_logger=script_logger,
+            task_name="preplot_times_in_ns",
+            data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
+            filter_files={"event": Fermat.path_directory/"event_filter.fd"},
+            max_toa=max_toa,
+            max_tot=max_tot,
+        )
 
 if __name__ == '__main__':
     import argparse

@@ -37,7 +37,14 @@ def script_main(
             plot_dac_vs_charge_task(Geralt, script_logger=script_logger, extra_title=extra_title)
 
         if Geralt.task_completed("calculate_times_in_ns"):
-            plot_times_in_ns_task(Geralt, script_logger=script_logger, extra_title=extra_title, max_toa=max_toa, max_tot=max_tot)
+            plot_times_in_ns_task(
+                Geralt,
+                script_logger=script_logger,
+                task_name="preplot_times_in_ns",
+                data_file=Geralt.get_task_path("calculate_times_in_ns")/'data.sqlite',
+                max_toa=max_toa,
+                max_tot=max_tot,
+            )
 
 if __name__ == '__main__':
     import argparse
