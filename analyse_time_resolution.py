@@ -67,10 +67,11 @@ def calculate_times_in_ns_task(
                                if_exists='replace')
 
 def make_toa_correlation(
-    Monet: RM.TaskManager,
     board_a:int,
     board_b:int,
     data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
     extra_title: str = "",
     full_html:bool=False,
     range_x = None,
@@ -107,7 +108,7 @@ def make_toa_correlation(
             "time_of_arrival_ns_{}".format(board_a): "Board {} Time of Arrival [ns]".format(board_a),
             "time_of_arrival_ns_{}".format(board_b): "Board {} Time of Arrival [ns]".format(board_b),
         },
-        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, Monet.run_name, extra_title),
+        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, run_name, extra_title),
         opacity = 0.1,
         trendline="ols",
         range_x=range_x,
@@ -128,7 +129,7 @@ def make_toa_correlation(
     trendline = fig.data[1]
 
     fig.write_html(
-        Monet.task_path/'toa_board{}_vs_board{}_scatter.html'.format(board_a, board_b),
+        base_path/'toa_board{}_vs_board{}_scatter.html'.format(board_a, board_b),
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -142,7 +143,7 @@ def make_toa_correlation(
             "time_of_arrival_ns_{}".format(board_b): "Board {} Time of Arrival [ns]".format(board_b),
         },
         color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, Monet.run_name, extra_title),
+        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, run_name, extra_title),
         range_x=range_x,
         range_y=range_y,
         nbinsx=nbinsx,
@@ -153,7 +154,7 @@ def make_toa_correlation(
     fig.add_trace(trendline)
 
     fig.write_html(
-        Monet.task_path/'toa_board{}_vs_board{}.html'.format(board_a, board_b),
+        base_path/'toa_board{}_vs_board{}.html'.format(board_a, board_b),
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
@@ -409,7 +410,7 @@ def plot_times_in_ns_task(
                     if idx_a >= idx_b:
                         continue
 
-                    make_toa_correlation(Monet, board_a=board_a, board_b=board_b, data_df=pivot_data_df, extra_title=extra_title, full_html=full_html, range_x=range_toa, range_y=range_toa)
+                    make_toa_correlation(board_a=board_a, board_b=board_b, data_df=pivot_data_df, base_path=Monet.task_path, run_name=Monet.run_name, extra_title=extra_title, full_html=full_html, range_x=range_toa, range_y=range_toa)
 
             fig = px.scatter_matrix(
                 pivot_data_df,
