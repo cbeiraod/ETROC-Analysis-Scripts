@@ -11,6 +11,56 @@ import sqlite3
 import plotly.express as px
 import plotly.graph_objects as go
 
+def make_multi_scatter_plot(
+    data_df:pandas.DataFrame,
+    run_name: str,
+    task_name: str,
+    base_path: Path,
+    color_column: str,
+    full_html: bool = False,  # For saving a html containing only a div with the plot
+    extra_title: str = "",
+    ):
+    fig = px.scatter_matrix(
+        data_df,
+        dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"],
+        labels = {
+            "time_over_threshold": "Time over Threshold",
+            "time_of_arrival": "Time of Arrival",
+            "calibration_code": "Calibration Code",
+            "data_board_id_cat": "Board ID",
+        },
+        color=color_column,
+        title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        opacity = 0.2,
+    )
+
+    fig.update_traces(
+        diagonal_visible=False,
+        showupperhalf=False,
+        marker = {'size': 3},
+    )
+    for k in range(len(fig.data)):
+        fig.data[k].update(
+            selected = dict(
+                marker = dict(
+                    #opacity = 1,
+                    #color = 'blue',
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    #opacity = 0.1,
+                    color="grey"
+                )
+            ),
+        )
+
+    fig.write_html(
+        base_path/'multi_scatter.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
 def make_plots(
     original_df: pandas.DataFrame,
     run_name: str,
@@ -129,45 +179,14 @@ def make_plots(
     )
 
     df["data_board_id_cat"] = df["data_board_id"].astype(str)
-    fig = px.scatter_matrix(
-        df,
-        dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"],
-        labels = {
-            "time_over_threshold": "Time over Threshold",
-            "time_of_arrival": "Time of Arrival",
-            "calibration_code": "Calibration Code",
-            "data_board_id_cat": "Board ID",
-        },
-        color='data_board_id_cat',
-        title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-        opacity = 0.2,
-    )
-
-    fig.update_traces(
-        diagonal_visible=False,
-        showupperhalf=False,
-        marker = {'size': 3},
-    )
-    for k in range(len(fig.data)):
-        fig.data[k].update(
-            selected = dict(
-                marker = dict(
-                    #opacity = 1,
-                    #color = 'blue',
-                )
-            ),
-            unselected = dict(
-                marker = dict(
-                    #opacity = 0.1,
-                    color="grey"
-                )
-            ),
-        )
-
-    fig.write_html(
-        base_path/'multi_scatter.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
+    make_multi_scatter_plot(
+        data_df=df,
+        run_name=run_name,
+        task_name=task_name,
+        base_path=base_path,
+        color_column='data_board_id_cat',
+        full_html=full_html,
+        extra_title=extra_title,
     )
 
     if len(df) == 0:  # The heatmaps (2D Histograms) seem to break when the dataframe has no data
