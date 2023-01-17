@@ -66,6 +66,98 @@ def calculate_times_in_ns_task(
                                index=False,
                                if_exists='replace')
 
+def make_toa_correlation(
+    Monet: RM.TaskManager,
+    board_a:int,
+    board_b:int,
+    data_df: pandas.DataFrame,
+    extra_title: str = "",
+    full_html:bool=False,
+    range_x = None,
+    range_y = None,
+    ):
+    min_x = data_df["time_of_arrival_ns_{}".format(board_a)].min()
+    max_x = data_df["time_of_arrival_ns_{}".format(board_a)].max()
+    min_y = data_df["time_of_arrival_ns_{}".format(board_b)].min()
+    max_y = data_df["time_of_arrival_ns_{}".format(board_b)].max()
+
+    if range_x is None:
+        range_x = [min_x, max_x]
+    else:
+        range_x = [
+            max(min_x, range_x[0]),
+            min(max_x, range_x[1])
+        ]
+    if range_y is None:
+        range_y = [min_y, max_y]
+    else:
+        range_y = [
+            max(min_y, range_y[0]),
+            min(max_y, range_y[1])
+        ]
+
+    nbinsx = ceil((range_x[1] - range_x[0]) * 40)
+    nbinsy = ceil((range_y[1] - range_y[0]) * 40)
+
+    fig = px.scatter(
+        data_df,
+        x="time_of_arrival_ns_{}".format(board_a),
+        y="time_of_arrival_ns_{}".format(board_b),
+        labels = {
+            "time_of_arrival_ns_{}".format(board_a): "Board {} Time of Arrival [ns]".format(board_a),
+            "time_of_arrival_ns_{}".format(board_b): "Board {} Time of Arrival [ns]".format(board_b),
+        },
+        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, Monet.run_name, extra_title),
+        opacity = 0.1,
+        trendline="ols",
+        range_x=range_x,
+        range_y=range_y,
+    )
+
+    model = px.get_trendline_results(fig)
+    alpha = model.iloc[0]["px_fit_results"].params[0]
+    beta = model.iloc[0]["px_fit_results"].params[1]
+    rsq = model.iloc[0]["px_fit_results"].rsquared
+
+    fig.data[0].name = 'data'
+    fig.data[0].showlegend = True
+    fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
+    fig.data[1].showlegend = True
+    fig.data[1].line.color = 'red'
+    #fig.data[1].line.dash = 'dash'
+    trendline = fig.data[1]
+
+    fig.write_html(
+        Monet.task_path/'toa_board{}_vs_board{}_scatter.html'.format(board_a, board_b),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    fig = px.density_heatmap(
+        data_df,
+        x="time_of_arrival_ns_{}".format(board_a),
+        y="time_of_arrival_ns_{}".format(board_b),
+        labels = {
+            "time_of_arrival_ns_{}".format(board_a): "Board {} Time of Arrival [ns]".format(board_a),
+            "time_of_arrival_ns_{}".format(board_b): "Board {} Time of Arrival [ns]".format(board_b),
+        },
+        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        title = "Time of Arrival correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, Monet.run_name, extra_title),
+        range_x=range_x,
+        range_y=range_y,
+        nbinsx=nbinsx,
+        nbinsy=nbinsy,
+    )
+
+    #trendline.showlegend = False
+    fig.add_trace(trendline)
+
+    fig.write_html(
+        Monet.task_path/'toa_board{}_vs_board{}.html'.format(board_a, board_b),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
 def plot_times_in_ns_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
@@ -308,6 +400,16 @@ def plot_times_in_ns_task(
                 full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
+
+            board_ids = sorted(data_df["data_board_id"].unique())
+            for idx_a in range(len(board_ids)):
+                board_a = board_ids[idx_a]
+                for idx_b in range(len(board_ids)):
+                    board_b = board_ids[idx_b]
+                    if idx_a >= idx_b:
+                        continue
+
+                    make_toa_correlation(Monet, board_a=board_a, board_b=board_b, data_df=pivot_data_df, extra_title=extra_title, full_html=full_html, range_x=range_toa, range_y=range_toa)
 
             fig = px.scatter_matrix(
                 pivot_data_df,
