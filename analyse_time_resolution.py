@@ -163,17 +163,99 @@ def make_toa_correlation(
     )
 
 def make_tot_vs_toa_plots(
-    Monet: RM.TaskManager,
     data_df: pandas.DataFrame,
     base_path: Path,
+    run_name: str,
     full_html:bool=False,
     max_toa:float=20,
     max_tot:float=20,
     min_toa:float=-20,
     min_tot:float=-20,
     extra_title: str = "",
+    file_prepend: str = "",
+    subtitle: str = "",
+    facet_col=None,
+    facet_col_wrap=None,
     ):
-    pass
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if file_prepend != "":
+        file_prepend += "_"
+
+    if subtitle != "":
+        subtitle += "; "
+
+    min_toa_df = data_df["time_of_arrival_ns"].min()
+    max_toa_df = data_df["time_of_arrival_ns"].max()
+    min_tot_df = data_df["time_over_threshold_ns"].min()
+    max_tot_df = data_df["time_over_threshold_ns"].max()
+
+    if min_toa is not None and max_toa is not None and max_toa > min_toa:
+        range_toa = [
+            max(min_toa, min_toa_df),
+            min(max_toa, max_toa_df)
+        ]
+    else:
+        range_toa = [min_toa_df, max_toa_df]
+    if min_tot is not None and max_tot is not None and max_tot > min_tot:
+        range_tot = [
+            max(min_tot, min_tot_df),
+            min(max_tot, max_tot_df)
+        ]
+    else:
+        range_tot = [min_tot_df, max_tot_df]
+
+    nbins_toa = ceil((range_toa[1] - range_toa[0]) * 20)
+    nbins_tot = ceil((range_tot[1] - range_tot[0]) * 20)
+
+    fig = px.density_heatmap(
+        data_df,
+        x="time_over_threshold_ns",
+        y="time_of_arrival_ns",
+        labels = {
+            "time_over_threshold_ns": "Time over Threshold [ns]",
+            "time_of_arrival_ns": "Time of Arrival [ns]",
+            "data_board_id": "Board ID",
+        },
+        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        title = "Histogram of TOT vs TOA in ns<br><sup>{}Run: {}{}</sup>".format(subtitle, run_name, extra_title),
+        range_x=range_tot,
+        range_y=range_toa,
+        nbinsx=nbins_tot,
+        nbinsy=nbins_toa,
+        facet_col=facet_col,
+        facet_col_wrap=facet_col_wrap,
+    )
+
+    fig.write_html(
+        base_path/'{}TOT_vs_TOA_ns_histogram.html'.format(file_prepend),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    fig = px.scatter(
+        data_df,
+        x="time_over_threshold_ns",
+        y="time_of_arrival_ns",
+        labels = {
+            "time_over_threshold_ns": "Time over Threshold [ns]",
+            "time_of_arrival_ns": "Time of Arrival [ns]",
+            "data_board_id": "Board ID",
+        },
+        title = "Scatter of TOT vs TOA in ns<br><sup>{}Run: {}{}</sup>".format(subtitle, run_name, extra_title),
+        range_x=range_tot,
+        range_y=range_toa,
+        opacity=0.2,
+        facet_col=facet_col,
+        facet_col_wrap=facet_col_wrap,
+    )
+
+    fig.write_html(
+        base_path/'{}TOT_vs_TOA_ns_scatter.html'.format(file_prepend),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
 
 def make_time_plots(
     Monet: RM.TaskManager,
@@ -235,118 +317,32 @@ def plot_times_in_ns_task(
 
                 board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
-                min_toa_df = board_df["time_of_arrival_ns"].min()
-                max_toa_df = board_df["time_of_arrival_ns"].max()
-                min_tot_df = board_df["time_over_threshold_ns"].min()
-                max_tot_df = board_df["time_over_threshold_ns"].max()
-
-                if min_toa is not None and max_toa is not None and max_toa > min_toa:
-                    range_toa = [
-                        max(min_toa, min_toa_df),
-                        min(max_toa, max_toa_df)
-                    ]
-                else:
-                    range_toa = [min_toa_df, max_toa_df]
-                if min_tot is not None and max_tot is not None and max_tot > min_tot:
-                    range_tot = [
-                        max(min_tot, min_tot_df),
-                        min(max_tot, max_tot_df)
-                    ]
-                else:
-                    range_tot = [min_tot_df, max_tot_df]
-
-                nbins_toa = ceil((range_toa[1] - range_toa[0]) * 20)
-                nbins_tot = ceil((range_tot[1] - range_tot[0]) * 20)
-
-                fig = px.density_heatmap(
-                    board_df,
-                    x="time_over_threshold_ns",
-                    y="time_of_arrival_ns",
-                    labels = {
-                        "time_over_threshold_ns": "Time over Threshold [ns]",
-                        "time_of_arrival_ns": "Time of Arrival [ns]",
-                        "data_board_id": "Board ID",
-                    },
-                    color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-                    title = "Histogram of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                    range_x=range_tot,
-                    range_y=range_toa,
-                    nbinsx=nbins_tot,
-                    nbinsy=nbins_toa,
+                make_tot_vs_toa_plots(
+                    data_df=board_df,
+                    base_path=Monet.task_path,
+                    run_name=Monet.run_name,
+                    full_html=full_html,
+                    max_toa=max_toa,
+                    max_tot=max_tot,
+                    min_toa=min_toa,
+                    min_tot=min_tot,
+                    extra_title=extra_title,
+                    file_prepend="Board{}".format(board_id),
+                    subtitle="Board {}".format(board_id),
                 )
 
-                fig.write_html(
-                    Monet.task_path/'Board{}_TOT_vs_TOA_ns.html'.format(board_id),
-                    full_html = full_html,
-                    include_plotlyjs = 'cdn',
-                )
-
-                fig = px.scatter(
-                    board_df,
-                    x="time_over_threshold_ns",
-                    y="time_of_arrival_ns",
-                    labels = {
-                        "time_over_threshold_ns": "Time over Threshold [ns]",
-                        "time_of_arrival_ns": "Time of Arrival [ns]",
-                        "data_board_id": "Board ID",
-                    },
-                    title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                    range_x=range_tot,
-                    range_y=range_toa,
-                    opacity=0.2,
-                )
-
-                fig.write_html(
-                    Monet.task_path/'Board{}_TOT_vs_TOA_ns_scatter.html'.format(board_id),
-                    full_html = full_html,
-                    include_plotlyjs = 'cdn',
-                )
-
-            min_toa_df = data_df["time_of_arrival_ns"].min()
-            max_toa_df = data_df["time_of_arrival_ns"].max()
-            min_tot_df = data_df["time_over_threshold_ns"].min()
-            max_tot_df = data_df["time_over_threshold_ns"].max()
-
-            if min_toa is not None and max_toa is not None and max_toa > min_toa:
-                range_toa = [
-                    max(min_toa, min_toa_df),
-                    min(max_toa, max_toa_df)
-                ]
-            else:
-                range_toa = [min_toa_df, max_toa_df]
-            if min_tot is not None and max_tot is not None and max_tot > min_tot:
-                range_tot = [
-                    max(min_tot, min_tot_df),
-                    min(max_tot, max_tot_df)
-                ]
-            else:
-                range_tot = [min_tot_df, max_tot_df]
-
-            nbins_toa = ceil((range_toa[1] - range_toa[0]) * 30)
-            nbins_tot = ceil((range_tot[1] - range_tot[0]) * 30)
-
-            fig = px.density_heatmap(
-                data_df,
-                x="time_over_threshold_ns",
-                y="time_of_arrival_ns",
-                labels = {
-                    "time_over_threshold_ns": "Time over Threshold [ns]",
-                    "time_of_arrival_ns": "Time of Arrival [ns]",
-                    "data_board_id": "Board ID",
-                },
-                color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+            make_tot_vs_toa_plots(
+                data_df=data_df,
+                base_path=Monet.task_path,
+                run_name=Monet.run_name,
+                full_html=full_html,
+                max_toa=max_toa,
+                max_tot=max_tot,
+                min_toa=min_toa,
+                min_tot=min_tot,
+                extra_title=extra_title,
                 facet_col='data_board_id',
                 facet_col_wrap=2,
-                title = "Histogram of TOT vs TOA in ns<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
-                range_x=range_tot,
-                range_y=range_toa,
-                nbinsx=nbins_tot,
-                nbinsy=nbins_toa,
-            )
-            fig.write_html(
-                Monet.task_path/'TOT_vs_TOA_ns.html',
-                full_html = full_html,
-                include_plotlyjs = 'cdn',
             )
 
             data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
