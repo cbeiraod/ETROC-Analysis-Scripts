@@ -277,7 +277,7 @@ def plot_times_in_ns_task(
                 pivot_data_df,
                 dimensions = sorted(toa_dimensions),
                 labels = toa_labels,
-				title = 'TOA Correlation matrix<br><sup>Run: {}{}</sup>'.format(Monet.run_name, extra_title),
+				title = 'TOA Correlation Matrix<br><sup>Run: {}{}</sup>'.format(Monet.run_name, extra_title),
                 opacity = 0.15,
             )
             fig.update_traces(
