@@ -77,6 +77,9 @@ def make_toa_correlation(
     range_x = None,
     range_y = None,
     ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
     min_x = data_df["time_of_arrival_ns_{}".format(board_a)].min()
     max_x = data_df["time_of_arrival_ns_{}".format(board_a)].max()
     min_y = data_df["time_of_arrival_ns_{}".format(board_b)].min()
