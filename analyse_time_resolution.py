@@ -12,6 +12,9 @@ import sqlite3
 import plotly.express as px
 import plotly.graph_objects as go
 
+from math import ceil
+from math import floor
+
 def calculate_times_in_ns_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
@@ -72,19 +75,11 @@ def plot_times_in_ns_task(
     drop_old_data:bool=True,
     extra_title: str = "",
     full_html:bool=False,
-    max_toa:float=0,
-    max_tot:float=0,
+    max_toa:float=20,
+    max_tot:float=20,
+    min_toa:float=-20,
+    min_tot:float=-20,
     ):
-    if max_tot is None or max_tot <= 0:
-        range_x = None
-    else:
-        range_x = [0, max_tot]
-
-    if max_toa is None or max_toa <= 0:
-        range_y = None
-    else:
-        range_y = [0, max_toa]
-
     with Fermat.handle_task(task_name, drop_old_data=drop_old_data) as Monet:
         with sqlite3.connect(data_file) as input_sqlite3_connection:
             data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
@@ -115,6 +110,29 @@ def plot_times_in_ns_task(
 
                 board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
+                min_toa_df = board_df["time_of_arrival_ns"].min()
+                max_toa_df = board_df["time_of_arrival_ns"].max()
+                min_tot_df = board_df["time_over_threshold_ns"].min()
+                max_tot_df = board_df["time_over_threshold_ns"].max()
+
+                if min_toa is not None and max_toa is not None and max_toa > min_toa:
+                    range_toa = [
+                        max(min_toa, min_toa_df),
+                        min(max_toa, max_toa_df)
+                    ]
+                else:
+                    range_toa = [min_toa_df, max_toa_df]
+                if min_tot is not None and max_tot is not None and max_tot > min_tot:
+                    range_tot = [
+                        max(min_tot, min_tot_df),
+                        min(max_tot, max_tot_df)
+                    ]
+                else:
+                    range_tot = [min_tot_df, max_tot_df]
+
+                nbins_toa = ceil((range_toa[1] - range_toa[0]) * 20)
+                nbins_tot = ceil((range_tot[1] - range_tot[0]) * 20)
+
                 fig = px.density_heatmap(
                     board_df,
                     x="time_over_threshold_ns",
@@ -126,8 +144,10 @@ def plot_times_in_ns_task(
                     },
                     color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
                     title = "Histogram of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                    range_x=range_x,
-                    range_y=range_y,
+                    range_x=range_tot,
+                    range_y=range_toa,
+                    nbinsx=nbins_tot,
+                    nbinsy=nbins_toa,
                 )
 
                 fig.write_html(
@@ -146,8 +166,8 @@ def plot_times_in_ns_task(
                         "data_board_id": "Board ID",
                     },
                     title = "Scatter of TOT vs TOA in ns<br><sup>Board {}; Run: {}{}</sup>".format(board_id, Monet.run_name, extra_title),
-                    range_x=range_x,
-                    range_y=range_y,
+                    range_x=range_tot,
+                    range_y=range_toa,
                     opacity=0.2,
                 )
 
@@ -156,6 +176,29 @@ def plot_times_in_ns_task(
                     full_html = full_html,
                     include_plotlyjs = 'cdn',
                 )
+
+            min_toa_df = data_df["time_of_arrival_ns"].min()
+            max_toa_df = data_df["time_of_arrival_ns"].max()
+            min_tot_df = data_df["time_over_threshold_ns"].min()
+            max_tot_df = data_df["time_over_threshold_ns"].max()
+
+            if min_toa is not None and max_toa is not None and max_toa > min_toa:
+                range_toa = [
+                    max(min_toa, min_toa_df),
+                    min(max_toa, max_toa_df)
+                ]
+            else:
+                range_toa = [min_toa_df, max_toa_df]
+            if min_tot is not None and max_tot is not None and max_tot > min_tot:
+                range_tot = [
+                    max(min_tot, min_tot_df),
+                    min(max_tot, max_tot_df)
+                ]
+            else:
+                range_tot = [min_tot_df, max_tot_df]
+
+            nbins_toa = ceil((range_toa[1] - range_toa[0]) * 30)
+            nbins_tot = ceil((range_tot[1] - range_tot[0]) * 30)
 
             fig = px.density_heatmap(
                 data_df,
@@ -170,8 +213,10 @@ def plot_times_in_ns_task(
                 facet_col='data_board_id',
                 facet_col_wrap=2,
                 title = "Histogram of TOT vs TOA in ns<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
-                range_x=range_x,
-                range_y=range_y,
+                range_x=range_tot,
+                range_y=range_toa,
+                nbinsx=nbins_tot,
+                nbinsy=nbins_toa,
             )
             fig.write_html(
                 Monet.task_path/'TOT_vs_TOA_ns.html',
@@ -290,6 +335,11 @@ def script_main(
 
     script_logger = logging.getLogger('apply_event_cuts')
 
+    if max_toa == 0:
+        max_toa = None
+    if max_tot == 0:
+        max_tot = None
+
     with RM.RunManager(output_directory.resolve()) as Fermat:
         Fermat.create_run(raise_error=False)
 
@@ -306,6 +356,8 @@ def script_main(
             filter_files={},
             max_toa=max_toa,
             max_tot=max_tot,
+            min_toa=0,
+            min_tot=0,
         )
 
         plot_times_in_ns_task(
@@ -316,6 +368,8 @@ def script_main(
             filter_files={"event": Fermat.path_directory/"event_filter.fd"},
             max_toa=max_toa,
             max_tot=max_tot,
+            min_toa=0,
+            min_tot=0,
         )
 
         # TODO: Add here cuts for cleaning TOA and other stuff
@@ -328,6 +382,8 @@ def script_main(
             filter_files={"event": Fermat.path_directory/"event_filter.fd"},
             max_toa=max_toa,
             max_tot=max_tot,
+            min_toa=0,
+            min_tot=0,
         )
 
 if __name__ == '__main__':

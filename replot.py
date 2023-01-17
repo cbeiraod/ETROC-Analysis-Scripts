@@ -22,6 +22,11 @@ def script_main(
 
     script_logger = logging.getLogger('replotter')
 
+    if max_toa == 0:
+        max_toa = None
+    if max_tot == 0:
+        max_tot = None
+
     with RM.RunManager(output_directory.resolve()) as Geralt:
         Geralt.create_run(raise_error=False)
 
@@ -45,6 +50,8 @@ def script_main(
                 filter_files={},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                min_toa=0,
+                min_tot=0,
                 extra_title=extra_title,
             )
             plot_times_in_ns_task(
@@ -55,6 +62,8 @@ def script_main(
                 filter_files={"event": Geralt.path_directory/"event_filter.fd"},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                min_toa=0,
+                min_tot=0,
                 extra_title=extra_title,
             )
             plot_times_in_ns_task(
@@ -65,6 +74,8 @@ def script_main(
                 filter_files={"event": Geralt.path_directory/"event_filter.fd"},
                 max_toa=max_toa,
                 max_tot=max_tot,
+                min_toa=0,
+                min_tot=0,
                 extra_title=extra_title,
             )
 
