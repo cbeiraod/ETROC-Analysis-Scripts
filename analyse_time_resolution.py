@@ -159,6 +159,19 @@ def make_toa_correlation(
         include_plotlyjs = 'cdn',
     )
 
+def make_tot_vs_toa_plots(
+    Monet: RM.TaskManager,
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    full_html:bool=False,
+    max_toa:float=20,
+    max_tot:float=20,
+    min_toa:float=-20,
+    min_tot:float=-20,
+    extra_title: str = "",
+    ):
+    pass
+
 2+2
 
 def plot_times_in_ns_task(
