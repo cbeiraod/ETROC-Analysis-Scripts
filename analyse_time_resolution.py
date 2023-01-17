@@ -101,12 +101,15 @@ def plot_times_in_ns_task(
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
             extra_title = ""
+            tot_dimensions = []
             toa_dimensions = []
             toa_labels = {}
 
             for board_id in data_df["data_board_id"].unique():
                 toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
-                toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} Time of Arrival [ns]".format(board_id)
+                tot_dimensions += ["time_over_threshold_ns_{}".format(board_id)]
+                toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} TOA [ns]".format(board_id)
+                toa_labels["time_over_threshold_ns_{}".format(board_id)] = "Board {} TOT [ns]".format(board_id)
 
                 board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
@@ -306,21 +309,35 @@ def plot_times_in_ns_task(
                 include_plotlyjs = 'cdn',
             )
 
-            #data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
-            fig = px.scatter(
+            fig = px.scatter_matrix(
                 pivot_data_df,
-                x="time_of_arrival_ns_1",
-                y="time_over_threshold_ns_1",
-                labels = {
-                    "time_over_threshold_ns_1": "Board 1 Time over Threshold [ns]",
-                    "time_of_arrival_ns_1": "Board 1 Time of Arrival [ns]",
-                },
-                #color='data_board_id_cat',
-                #title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                dimensions=toa_dimensions + tot_dimensions,
+                labels = toa_labels,
+                title = "Scatter plot correlating time variables between boards<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
+                opacity = 0.2,
             )
-
+            fig.update_traces(
+                diagonal_visible=False,
+                showupperhalf=False,
+                marker = {'size': 3},
+            )
+            for k in range(len(fig.data)):
+                fig.data[k].update(
+                    selected = dict(
+                        marker = dict(
+                            #opacity = 1,
+                            #color = 'blue',
+                        )
+                    ),
+                    unselected = dict(
+                        marker = dict(
+                            #opacity = 0.1,
+                            color="grey"
+                        )
+                    ),
+                )
             fig.write_html(
-                Monet.task_path/'test_scatter.html',
+                Monet.task_path/'time_scatter.html',
                 full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
