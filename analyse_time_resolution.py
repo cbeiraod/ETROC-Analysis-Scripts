@@ -15,6 +15,8 @@ import plotly.graph_objects as go
 from math import ceil
 from math import floor
 
+from plot_etroc1_single_run import make_multi_scatter_plot
+
 def calculate_times_in_ns_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
@@ -257,7 +259,7 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
-def make_time_plots(
+def make_all_time_plots(
     Monet: RM.TaskManager,
     data_df: pandas.DataFrame,
     base_path: Path,
@@ -346,45 +348,19 @@ def plot_times_in_ns_task(
             )
 
             data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
-            fig = px.scatter_matrix(
-                data_df,
-                dimensions=["time_of_arrival", "time_over_threshold", "calibration_code", "time_of_arrival_ns", "time_over_threshold_ns"],
-                labels = {
-                    "time_over_threshold": "Time over Threshold [code]",
-                    "time_of_arrival": "Time of Arrival [code]",
+            make_multi_scatter_plot(
+                data_df=data_df,
+                run_name=Monet.run_name,
+                task_name=Monet.task_name,
+                base_path=Monet.task_path,
+                color_column="data_board_id_cat",
+                full_html=full_html,
+                extra_title=extra_title,
+                additional_dimensions=["time_of_arrival_ns", "time_over_threshold_ns"],
+                additional_labels={
                     "time_over_threshold_ns": "Time over Threshold [ns]",
                     "time_of_arrival_ns": "Time of Arrival [ns]",
-                    "calibration_code": "Calibration Code",
-                    "data_board_id_cat": "Board ID",
                 },
-                color='data_board_id_cat',
-                title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
-                opacity = 0.2,
-            )
-            fig.update_traces(
-                diagonal_visible=False,
-                showupperhalf=False,
-                marker = {'size': 3},
-            )
-            for k in range(len(fig.data)):
-                fig.data[k].update(
-                    selected = dict(
-                        marker = dict(
-                            #opacity = 1,
-                            #color = 'blue',
-                        )
-                    ),
-                    unselected = dict(
-                        marker = dict(
-                            #opacity = 0.1,
-                            color="grey"
-                        )
-                    ),
-                )
-            fig.write_html(
-                Monet.task_path/'multi_scatter.html',
-                full_html = full_html,
-                include_plotlyjs = 'cdn',
             )
 
             pivot_data_df = data_df.pivot(
