@@ -22,15 +22,18 @@ def make_multi_scatter_plot(
     additional_dimensions: list[str] = [],
     additional_labels: dict[str] = {},
     ):
+    labels = {
+        "time_over_threshold": "Time over Threshold",
+        "time_of_arrival": "Time of Arrival",
+        "calibration_code": "Calibration Code",
+        "data_board_id_cat": "Board ID"
+    }
+    labels.update(additional_labels)
+
     fig = px.scatter_matrix(
         data_df,
-        dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"] + additional_dimensions,
-        labels = {
-            "time_over_threshold": "Time over Threshold",
-            "time_of_arrival": "Time of Arrival",
-            "calibration_code": "Calibration Code",
-            "data_board_id_cat": "Board ID",
-        }.update(additional_labels),
+        dimensions=sorted(["time_of_arrival", "time_over_threshold", "calibration_code"] + additional_dimensions),
+        labels = labels,
         color=color_column,
         title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
         opacity = 0.2,
