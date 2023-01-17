@@ -19,16 +19,18 @@ def make_multi_scatter_plot(
     color_column: str,
     full_html: bool = False,  # For saving a html containing only a div with the plot
     extra_title: str = "",
+    additional_dimensions: list[str] = [],
+    additional_labels: dict[str] = {},
     ):
     fig = px.scatter_matrix(
         data_df,
-        dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"],
+        dimensions=["time_of_arrival", "time_over_threshold", "calibration_code"] + additional_dimensions,
         labels = {
             "time_over_threshold": "Time over Threshold",
             "time_of_arrival": "Time of Arrival",
             "calibration_code": "Calibration Code",
             "data_board_id_cat": "Board ID",
-        },
+        }.update(additional_labels),
         color=color_column,
         title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
         opacity = 0.2,
