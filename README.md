@@ -42,7 +42,7 @@ The scripts to run and the order to run them in depends on how the data is taken
 
 Typically, in a first step the data must be ingested, which is performed with one of the scripts: `process_etroc1_single_run_txt.py` or `process_etroc1_single_charge_injection_run.py`.
 In a next step, cuts must be applied to the events with the `cut_etroc1_single_run.py` script.
-Finally, the time resolution may be calculated using the `calculate_times_in_ns.py` script, followed by the `analyse_time_resolution.py` script to calculate some parameters of interest.
+The time resolution may be calculated using the `calculate_times_in_ns.py` script. Cuts on the new time variables, as well as more complex cuts, can be applied with the `cut_times_in_ns.py` script. Finally, the `analyse_time_resolution.py` script can be used to calculate some parameters of interest.
 
 In an alternative approach, it may be desirable to process multiple runs at once, for instance when processing the charge injection data, where there is a single run for each charge threshold pair, but the user is interested in the data from the aggregation of all the runs. In this approach the `process_etroc1_charge_injection_data_dir.py` script should be used, followed by the `analyse_dac_vs_charge.py` script. Since the `process_etroc1_charge_injection_data_dir.py` script automatically selects a default cut, it may be desired to customize cuts or other options, in this case the customizations should be performed after running the script and then the `reprocess_etroc1_charge_injection_data_dir.py` script should be called.
 
