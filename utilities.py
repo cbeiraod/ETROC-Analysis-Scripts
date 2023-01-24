@@ -665,16 +665,8 @@ def plot_times_in_ns_task(
             board_ids = sorted(data_df["data_board_id"].unique())
 
             extra_title = ""
-            tot_dimensions = []
-            toa_dimensions = []
-            toa_labels = {}
 
             for board_id in board_ids:
-                toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
-                tot_dimensions += ["time_over_threshold_ns_{}".format(board_id)]
-                toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} TOA [ns]".format(board_id)
-                toa_labels["time_over_threshold_ns_{}".format(board_id)] = "Board {} TOT [ns]".format(board_id)
-
                 board_df = data_df.loc[data_df["data_board_id"] == board_id]
 
                 make_tot_vs_toa_plots(
