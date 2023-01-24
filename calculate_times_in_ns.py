@@ -15,6 +15,7 @@ def calculate_times_in_ns_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
     drop_old_data:bool=True,
+    fbin_choice:str="mean",
     ):
     if Fermat.task_completed("apply_event_cuts"):
         with Fermat.handle_task("calculate_times_in_ns", drop_old_data=drop_old_data) as Einstein:
@@ -44,7 +45,12 @@ def calculate_times_in_ns_task(
                 #accepted_data_df["time_over_threshold_ns"] = (accepted_data_df["time_over_threshold"]*2 - (accepted_data_df["time_over_threshold"]/32.).apply(numpy.floor))*accepted_data_df['fbin']
 
                 data_df.set_index("data_board_id", inplace=True)
-                data_df["fbin"] = board_info_df['fbin_mean']
+                if fbin_choice == "mean":
+                    data_df["fbin"] = board_info_df['fbin_mean']
+                elif fbin_choice == "median":
+                    data_df["fbin"] = board_info_df['fbin_median']
+                elif fbin_choice == "event":
+                    data_df["fbin"] = 3.125/data_df['calibration_code']
                 data_df.reset_index(inplace=True)
 
                 data_df["time_of_arrival_ns"] = 12.5 - data_df['time_of_arrival']*data_df['fbin']
