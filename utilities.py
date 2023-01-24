@@ -918,7 +918,7 @@ def plot_etroc1_task(
         Bob_Manager:RM.RunManager,
         task_name:str,
         data_file:Path,
-        filter_files:dict[Path] = {},
+        filter_files:dict[str,Path] = {},
         drop_old_data:bool = True,
         extra_title: str = "",
         ):
@@ -946,7 +946,7 @@ def plot_times_in_ns_task(
     script_logger: logging.Logger,
     task_name:str,
     data_file:Path,
-    filter_files:dict[Path] = {},
+    filter_files:dict[str,Path] = {},
     drop_old_data:bool=True,
     extra_title: str = "",
     full_html:bool=False,
