@@ -395,12 +395,16 @@ def plot_times_in_ns_task(
                 data_df = full_df.loc[full_df['accepted']==True]
             #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
 
+            data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
+
+            board_ids = sorted(data_df["data_board_id"].unique())
+
             extra_title = ""
             tot_dimensions = []
             toa_dimensions = []
             toa_labels = {}
 
-            for board_id in data_df["data_board_id"].unique():
+            for board_id in board_ids:
                 toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
                 tot_dimensions += ["time_over_threshold_ns_{}".format(board_id)]
                 toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} TOA [ns]".format(board_id)
@@ -436,7 +440,6 @@ def plot_times_in_ns_task(
                 facet_col_wrap=2,
             )
 
-            data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
             make_multi_scatter_plot(
                 data_df=data_df,
                 run_name=Monet.run_name,
@@ -460,7 +463,6 @@ def plot_times_in_ns_task(
             pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
 
 
-            board_ids = sorted(data_df["data_board_id"].unique())
 
             make_toa_correlation_plots(
                 data_df,
