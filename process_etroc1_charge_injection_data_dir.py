@@ -18,7 +18,8 @@ def process_etroc1_data_directory_task(
     script_logger: logging.Logger,
     run_files: list[str],
     keep_only_triggers: bool,
-    make_plots:bool = False
+    make_plots:bool = False,
+    first_time:bool = True,
 ):
     with AdaLovelace.handle_task("process_etroc1_data_directory", drop_old_data=True) as Turing:
         for file in run_files:
@@ -26,13 +27,14 @@ def process_etroc1_data_directory_task(
             file_base_name = str(path.name)[:-12]
             file_directory = AdaLovelace.path_directory/"Individual_Runs"/file_base_name
 
-            # Convert from RAW data format to our format
-            process_single_run(path, file_directory, keep_only_triggers, add_extra_data=False, drop_old_data=True, make_plots=make_plots)
+            if first_time:
+                # Convert from RAW data format to our format
+                process_single_run(path, file_directory, keep_only_triggers, add_extra_data=False, drop_old_data=True, make_plots=make_plots)
 
-            # Build a basic cuts.csv file
-            with (file_directory/"cuts.csv").open("w") as cuts_file:
-                cuts_file.write("board_id,variable,cut_type,cut_value,output\n")
-                cuts_file.write("#,calibration_code,<,200")
+                # Build a basic cuts.csv file
+                with (file_directory/"cuts.csv").open("w") as cuts_file:
+                    cuts_file.write("board_id,variable,cut_type,cut_value,output\n")
+                    cuts_file.write("#,calibration_code,<,200")
 
             # Apply cuts
             cut_single_run(file_directory, drop_old_data=True, make_plots=make_plots)
@@ -316,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-k',
         '--keep-all',
-        help = "If set, all lines from the raw data file will be kept in the output, if not, only those corresponding to triggers will be kept",
+        help = "If set, all lines from the raw data file will be kept in the output, if not, only those corresponding to hits will be kept",
         action = 'store_true',
         dest = 'keep_all',
     )
