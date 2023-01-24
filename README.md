@@ -54,6 +54,8 @@ The `process_etroc1_single_run_txt.py` script reads a txt file, produced as a su
 
 The `cut_etroc1_single_run.py` script ....
 
+The `calculate_times_in_ns.py` script applies the standard ETROC reconstruction formula to the measured data (calibration code, time of arrival code and time over threshold code) to reconstruct the time of arrival and time over threshold in nanoseconds. With the times in nanoseconds, it proceeds to also make plots, before and after cuts (if relevant).
+
 The `analyse_time_resolution.py` script ...
 
 The `process_etroc1_charge_injection_data_dir.py` script automatically processes all the individual runs from the input data file by calling the `process_etroc1_single_charge_injection_run.py`, then creating a default cut file followed by calling the `cut_etroc1_single_run.py`script it finally merges all the summary data into a single dataset.
