@@ -526,37 +526,13 @@ def plot_times_in_ns_task(
                 extra_title=extra_title,
             )
 
-            fig = px.scatter_matrix(
-                pivot_data_df,
-                dimensions=toa_dimensions + tot_dimensions,
-                labels = toa_labels,
-                title = "Scatter plot correlating time variables between boards<br><sup>Run: {}{}</sup>".format(Monet.run_name, extra_title),
-                opacity = 0.2,
-            )
-            fig.update_traces(
-                diagonal_visible=False,
-                showupperhalf=False,
-                marker = {'size': 3},
-            )
-            for k in range(len(fig.data)):
-                fig.data[k].update(
-                    selected = dict(
-                        marker = dict(
-                            #opacity = 1,
-                            #color = 'blue',
-                        )
-                    ),
-                    unselected = dict(
-                        marker = dict(
-                            #opacity = 0.1,
-                            color="grey"
-                        )
-                    ),
-                )
-            fig.write_html(
-                Monet.task_path/'time_scatter.html',
-                full_html = full_html,
-                include_plotlyjs = 'cdn',
+            make_time_correlation_plot(
+                data_df=pivot_data_df,
+                base_path=Monet.task_path,
+                run_name=Monet.run_name,
+                board_ids=board_ids,
+                full_html=full_html,
+                extra_title=extra_title,
             )
 
 
