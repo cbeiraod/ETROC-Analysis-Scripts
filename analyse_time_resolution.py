@@ -305,6 +305,43 @@ def make_toa_correlation_plot(
         include_plotlyjs = 'cdn',
     )
 
+def make_toa_correlation_plots(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_ids: list[int],
+    range_toa:list[float]=[-20,20],
+    full_html:bool=False,
+    extra_title: str = "",
+    ):
+
+    make_toa_correlation_plot(
+        data_df,
+        base_path=base_path,
+        run_name=run_name,
+        board_ids=board_ids,
+        full_html=full_html,
+        extra_title=extra_title,
+    )
+
+    for idx_a in range(len(board_ids)):
+        board_a = board_ids[idx_a]
+        for idx_b in range(len(board_ids)):
+            board_b = board_ids[idx_b]
+            if idx_a >= idx_b:
+                continue
+
+            make_boards_toa_correlation_plot(
+                board_a=board_a,
+                board_b=board_b,
+                data_df=data_df,
+                base_path=base_path,
+                run_name=run_name,
+                extra_title=extra_title,
+                full_html=full_html,
+                range_toa=range_toa,
+            )
+
 def make_time_correlation_plot(
     data_df: pandas.DataFrame,
     ):
@@ -422,58 +459,18 @@ def plot_times_in_ns_task(
             )
             pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
 
-            fig = px.scatter_matrix(
-                pivot_data_df,
-                dimensions = sorted(toa_dimensions),
-                labels = toa_labels,
-				title = 'TOA Correlation Matrix<br><sup>Run: {}{}</sup>'.format(Monet.run_name, extra_title),
-                opacity = 0.15,
-            )
-            fig.update_traces(
-                diagonal_visible = False,
-                showupperhalf = False,
-                marker = {'size': 3},
-            )
-            for k in range(len(fig.data)):
-                fig.data[k].update(
-                    selected = dict(
-                        marker = dict(
-                            #opacity = 1,
-                            #color = 'blue',
-                        )
-                    ),
-                    unselected = dict(
-                        marker = dict(
-                            #opacity = 0.1,
-                            color="grey"
-                        )
-                    ),
-                )
-            fig.write_html(
-                Monet.task_path/'toa_correlation_matrix.html',
-                full_html = full_html,
-                include_plotlyjs = 'cdn',
-            )
 
             board_ids = sorted(data_df["data_board_id"].unique())
-            for idx_a in range(len(board_ids)):
-                board_a = board_ids[idx_a]
-                for idx_b in range(len(board_ids)):
-                    board_b = board_ids[idx_b]
-                    if idx_a >= idx_b:
-                        continue
 
-                    make_boards_toa_correlation_plot(
-                        board_a=board_a,
-                        board_b=board_b,
-                        data_df=pivot_data_df,
-                        base_path=Monet.task_path,
-                        run_name=Monet.run_name,
-                        extra_title=extra_title,
-                        full_html=full_html,
-                        range_x=range_toa,
-                        range_y=range_toa,
-                    )
+            make_toa_correlation_plots(
+                data_df,
+                base_path=Monet.task_path,
+                run_name=Monet.run_name,
+                board_ids=board_ids,
+                range_toa=[min_toa, max_toa],
+                full_html=full_html,
+                extra_title=extra_title,
+            )
 
             fig = px.scatter_matrix(
                 pivot_data_df,
