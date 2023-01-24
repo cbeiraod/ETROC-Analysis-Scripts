@@ -259,6 +259,11 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
+def make_time_correlation_plot(
+    data_df: pandas.DataFrame,
+    ):
+    pass
+
 def make_time_plots(
     Monet: RM.TaskManager,
     data_df: pandas.DataFrame,
