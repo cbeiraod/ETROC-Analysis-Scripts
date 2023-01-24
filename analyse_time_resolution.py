@@ -344,8 +344,60 @@ def make_toa_correlation_plots(
 
 def make_time_correlation_plot(
     data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_ids: list[int],
+    full_html:bool=False,
+    extra_title: str = "",
     ):
-    pass
+    dimensions = []
+    labels = {}
+
+    # The two loops are separated so that the dimensions are in the order we choose, i.e. toa before tot
+    for board_id in board_ids:
+        dimension = "time_of_arrival_ns_{}".format(board_id)
+        label = "Board {} TOA [ns]".format(board_id)
+        dimensions += [dimension]
+        labels[dimension] = label
+
+    for board_id in board_ids:
+        dimension = "time_over_threshold_ns_{}".format(board_id)
+        label = "Board {} TOT [ns]".format(board_id)
+        dimensions += [dimension]
+        labels[dimension] = label
+
+    fig = px.scatter_matrix(
+        data_df,
+        dimensions=dimensions + dimensions,
+        labels = labels,
+        title = "Scatter plot correlating time variables between boards<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        opacity = 0.2,
+    )
+    fig.update_traces(
+        diagonal_visible=False,
+        showupperhalf=False,
+        marker = {'size': 3},
+    )
+    for k in range(len(fig.data)):
+        fig.data[k].update(
+            selected = dict(
+                marker = dict(
+                    #opacity = 1,
+                    #color = 'blue',
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    #opacity = 0.1,
+                    color="grey"
+                )
+            ),
+        )
+    fig.write_html(
+        base_path/'time_scatter.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
 
 def make_time_plots(
     data_df: pandas.DataFrame,
