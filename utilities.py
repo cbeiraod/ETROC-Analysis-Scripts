@@ -603,6 +603,23 @@ def apply_event_filter(data_df: pandas.DataFrame, filter_df: pandas.DataFrame, f
         reindexed_data_df["accepted"] &= reindexed_data_df[filter_name]
     return reindexed_data_df.reset_index()
 
+def filter_dataframe(
+    df:pandas.DataFrame,
+    filter_files:dict[Path],
+    script_logger:logging.Logger,
+    ):
+    for filter in filter_files:
+        if filter_files[filter].is_file():
+            filter_df = pandas.read_feather(filter_files[filter])
+            filter_df.set_index("event", inplace=True)
+
+            if filter == "event":
+                df = apply_event_filter(df, filter_df)
+        else:
+            script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
+
+    return df
+
 def plot_etroc1_task(
         Bob_Manager:RM.RunManager,
         task_name:str,
@@ -622,15 +639,11 @@ def plot_etroc1_task(
         with sqlite3.connect(data_file) as sqlite3_connection:
             df = pandas.read_sql('SELECT * FROM etroc1_data', sqlite3_connection, index_col=None)
 
-            for filter in filter_files:
-                if filter_files[filter].is_file():
-                    filter_df = pandas.read_feather(filter_files[filter])
-                    filter_df.set_index("event", inplace=True)
-
-                    if filter == "event":
-                        df = apply_event_filter(df, filter_df)
-                else:
-                    script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
+            df = filter_dataframe(
+                df=df,
+                filter_files=filter_files,
+                script_logger=script_logger,
+            )
 
             make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
 
@@ -652,15 +665,11 @@ def plot_times_in_ns_task(
         with sqlite3.connect(data_file) as input_sqlite3_connection:
             data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
 
-            for filter in filter_files:
-                if filter_files[filter].is_file():
-                    filter_df = pandas.read_feather(filter_files[filter])
-                    filter_df.set_index("event", inplace=True)
-
-                    if filter == "event":
-                        data_df = apply_event_filter(data_df, filter_df)
-                else:
-                    script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
+            data_df = filter_dataframe(
+                df=data_df,
+                filter_files=filter_files,
+                script_logger=script_logger,
+            )
 
             full_df = data_df
             if 'accepted' in data_df.columns:
