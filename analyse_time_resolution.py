@@ -259,16 +259,18 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
-def make_all_time_plots(
+def make_time_plots(
     Monet: RM.TaskManager,
     data_df: pandas.DataFrame,
     base_path: Path,
+    run_name: str,
+    task_name: str,
     full_html:bool=False,
     max_toa:float=20,
     max_tot:float=20,
     min_toa:float=-20,
     min_tot:float=-20,
-    extra_title: str = "",
+    extra_title:str="",
     ):
     pass
 
