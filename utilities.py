@@ -628,7 +628,6 @@ def plot_etroc1_task(
                     filter_df.set_index("event", inplace=True)
 
                     if filter == "event":
-                        from cut_etroc1_single_run import apply_event_filter
                         df = apply_event_filter(df, filter_df)
                 else:
                     script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
@@ -659,7 +658,6 @@ def plot_times_in_ns_task(
                     filter_df.set_index("event", inplace=True)
 
                     if filter == "event":
-                        from cut_etroc1_single_run import apply_event_filter
                         data_df = apply_event_filter(data_df, filter_df)
                 else:
                     script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
