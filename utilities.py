@@ -68,187 +68,6 @@ def make_multi_scatter_plot(
         include_plotlyjs = 'cdn',
     )
 
-def build_plots(
-    original_df: pandas.DataFrame,
-    run_name: str,
-    task_name: str,
-    base_path: Path,
-    full_html: bool = False,  # For saving a html containing only a div with the plot
-    extra_title: str = ""
-):
-    if extra_title != "":
-        extra_title = "<br>" + extra_title
-
-    if "accepted" in original_df:
-        df = original_df.query('accepted==True')
-    else:
-        df = original_df
-
-    fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
-        fig.add_trace(go.Histogram(
-            x=df.loc[df["data_board_id"] == board_id]["calibration_code"],
-            name='Board {}'.format(board_id), # name used in legend and hover labels
-            opacity=0.5,
-            bingroup=1,
-        ))
-    fig.update_layout(
-        barmode='overlay',
-        title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-        xaxis_title_text='Calibration Code', # xaxis label
-        yaxis_title_text='Count', # yaxis label
-    )
-    fig.update_yaxes(type="log")
-
-    fig.write_html(
-        base_path/'calibration_code_histogram.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-    fig.update_traces(
-        histnorm="probability"
-    )
-    fig.update_layout(
-        yaxis_title_text='Probability', # yaxis label
-    )
-    fig.write_html(
-        base_path/'calibration_code_pdf.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-
-    fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
-        fig.add_trace(go.Histogram(
-            x=df.loc[df["data_board_id"] == board_id]["time_of_arrival"],
-            name='Board {}'.format(board_id), # name used in legend and hover labels
-            opacity=0.5,
-            bingroup=1,
-        ))
-    fig.update_layout(
-        barmode='overlay',
-        title_text="Histogram of Time of Arrival<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-        xaxis_title_text='Time of Arrival', # xaxis label
-        yaxis_title_text='Count', # yaxis label
-    )
-
-    fig.write_html(
-        base_path/'time_of_arrival_histogram.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-    #fig.write_image(
-    #    file=base_path/'time_of_arrival_histogram.pdf',
-    #    format="pdf"
-    #)
-    fig.update_traces(
-        histnorm="probability"
-    )
-    fig.update_layout(
-        yaxis_title_text='Probability', # yaxis label
-    )
-    fig.write_html(
-        base_path/'time_of_arrival_pdf.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-
-    fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
-        fig.add_trace(go.Histogram(
-            x=df.loc[df["data_board_id"] == board_id]["time_over_threshold"],
-            name='Board {}'.format(board_id), # name used in legend and hover labels
-            opacity=0.5,
-            bingroup=1,
-        ))
-    fig.update_layout(
-        barmode='overlay',
-        title_text="Histogram of Time over Threshold<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-        xaxis_title_text='Time over Threshold', # xaxis label
-        yaxis_title_text='Count', # yaxis label
-    )
-
-    fig.write_html(
-        base_path/'time_over_threshold_histogram.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-    fig.update_traces(
-        histnorm="probability"
-    )
-    fig.update_layout(
-        yaxis_title_text='Probability', # yaxis label
-    )
-    fig.write_html(
-        base_path/'time_over_threshold_pdf.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-
-    df["data_board_id_cat"] = df["data_board_id"].astype(str)
-    make_multi_scatter_plot(
-        data_df=df,
-        run_name=run_name,
-        task_name=task_name,
-        base_path=base_path,
-        color_column='data_board_id_cat',
-        full_html=full_html,
-        extra_title=extra_title,
-    )
-
-    if len(df) == 0:  # The heatmaps (2D Histograms) seem to break when the dataframe has no data
-        return
-
-    for board_id in df["data_board_id"].unique():
-        board_df = df.loc[df["data_board_id"] == board_id]
-
-        fig = px.density_heatmap(
-            board_df,
-            x="time_over_threshold",
-            y="time_of_arrival",
-            labels = {
-                "time_over_threshold": "Time over Threshold",
-                "time_of_arrival": "Time of Arrival",
-                "data_board_id": "Board ID",
-            },
-            # marginal_x="histogram",
-            # marginal_y="histogram",
-            color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-            # facet_col='data_board_id',
-            # facet_col_wrap=2,
-            title = "Histogram of TOT vs TOA<br><sup>Board {}; Run: {}{}</sup>".format(board_id, run_name, extra_title),
-            # marginal_x='box',  # One of 'rug', 'box', 'violin', or 'histogram'
-            # marginal_y='box',
-        )
-
-        fig.write_html(
-            base_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
-            full_html = full_html,
-            include_plotlyjs = 'cdn',
-        )
-
-    fig = px.density_heatmap(
-        df,
-        x="time_over_threshold",
-        y="time_of_arrival",
-        labels = {
-            "time_over_threshold": "Time over Threshold",
-            "time_of_arrival": "Time of Arrival",
-            "data_board_id": "Board ID",
-        },
-        # marginal_x="histogram",
-        # marginal_y="histogram",
-        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
-        facet_col='data_board_id',
-        facet_col_wrap=2,
-        title = "Histogram of TOT vs TOA<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-    )
-    fig.write_html(
-        base_path/'TOT_vs_TOA.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-
 def make_tot_vs_toa_plots(
     data_df: pandas.DataFrame,
     base_path: Path,
@@ -570,6 +389,187 @@ def make_time_correlation_plot(
         )
     fig.write_html(
         base_path/'time_scatter.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+def build_plots(
+    original_df: pandas.DataFrame,
+    run_name: str,
+    task_name: str,
+    base_path: Path,
+    full_html: bool = False,  # For saving a html containing only a div with the plot
+    extra_title: str = ""
+):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if "accepted" in original_df:
+        df = original_df.query('accepted==True')
+    else:
+        df = original_df
+
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["calibration_code"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Calibration Code', # xaxis label
+        yaxis_title_text='Count', # yaxis label
+    )
+    fig.update_yaxes(type="log")
+
+    fig.write_html(
+        base_path/'calibration_code_histogram.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        base_path/'calibration_code_pdf.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["time_of_arrival"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Time of Arrival<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Time of Arrival', # xaxis label
+        yaxis_title_text='Count', # yaxis label
+    )
+
+    fig.write_html(
+        base_path/'time_of_arrival_histogram.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    #fig.write_image(
+    #    file=base_path/'time_of_arrival_histogram.pdf',
+    #    format="pdf"
+    #)
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        base_path/'time_of_arrival_pdf.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    fig = go.Figure()
+    for board_id in df["data_board_id"].unique():
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id]["time_over_threshold"],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of Time over Threshold<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+        xaxis_title_text='Time over Threshold', # xaxis label
+        yaxis_title_text='Count', # yaxis label
+    )
+
+    fig.write_html(
+        base_path/'time_over_threshold_histogram.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        base_path/'time_over_threshold_pdf.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    df["data_board_id_cat"] = df["data_board_id"].astype(str)
+    make_multi_scatter_plot(
+        data_df=df,
+        run_name=run_name,
+        task_name=task_name,
+        base_path=base_path,
+        color_column='data_board_id_cat',
+        full_html=full_html,
+        extra_title=extra_title,
+    )
+
+    if len(df) == 0:  # The heatmaps (2D Histograms) seem to break when the dataframe has no data
+        return
+
+    for board_id in df["data_board_id"].unique():
+        board_df = df.loc[df["data_board_id"] == board_id]
+
+        fig = px.density_heatmap(
+            board_df,
+            x="time_over_threshold",
+            y="time_of_arrival",
+            labels = {
+                "time_over_threshold": "Time over Threshold",
+                "time_of_arrival": "Time of Arrival",
+                "data_board_id": "Board ID",
+            },
+            # marginal_x="histogram",
+            # marginal_y="histogram",
+            color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+            # facet_col='data_board_id',
+            # facet_col_wrap=2,
+            title = "Histogram of TOT vs TOA<br><sup>Board {}; Run: {}{}</sup>".format(board_id, run_name, extra_title),
+            # marginal_x='box',  # One of 'rug', 'box', 'violin', or 'histogram'
+            # marginal_y='box',
+        )
+
+        fig.write_html(
+            base_path/'Board{}_TOT_vs_TOA.html'.format(board_id),
+            full_html = full_html,
+            include_plotlyjs = 'cdn',
+        )
+
+    fig = px.density_heatmap(
+        df,
+        x="time_over_threshold",
+        y="time_of_arrival",
+        labels = {
+            "time_over_threshold": "Time over Threshold",
+            "time_of_arrival": "Time of Arrival",
+            "data_board_id": "Board ID",
+        },
+        # marginal_x="histogram",
+        # marginal_y="histogram",
+        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        facet_col='data_board_id',
+        facet_col_wrap=2,
+        title = "Histogram of TOT vs TOA<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+    )
+    fig.write_html(
+        base_path/'TOT_vs_TOA.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
