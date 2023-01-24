@@ -264,13 +264,13 @@ def make_toa_correlation_plot(
 
     for board_id in board_ids:
         toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
-        toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} TOA [ns]".format(board_id)
+        toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} Time of Arrival [ns]".format(board_id)
 
     fig = px.scatter_matrix(
         data_df,
         dimensions = sorted(toa_dimensions),
         labels = toa_labels,
-        title = 'TOA Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
+        title = 'Time of Arrival Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
         opacity = 0.15,
     )
     fig.update_traces(
@@ -440,13 +440,13 @@ def make_tot_correlation_plot(
 
     for board_id in board_ids:
         tot_dimensions += ["time_over_threshold_ns_{}".format(board_id)]
-        tot_labels["time_over_threshold_ns_{}".format(board_id)] = "Board {} TOT [ns]".format(board_id)
+        tot_labels["time_over_threshold_ns_{}".format(board_id)] = "Board {} Time over Threshold [ns]".format(board_id)
 
     fig = px.scatter_matrix(
         data_df,
         dimensions = sorted(tot_dimensions),
         labels = tot_labels,
-        title = 'TOT Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
+        title = 'Time over Threshold Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
         opacity = 0.15,
     )
     fig.update_traces(
