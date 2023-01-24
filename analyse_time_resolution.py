@@ -68,7 +68,7 @@ def calculate_times_in_ns_task(
                                index=False,
                                if_exists='replace')
 
-def make_toa_correlation(
+def make_toa_correlation_plot(
     board_a:int,
     board_b:int,
     data_df: pandas.DataFrame,
@@ -411,7 +411,7 @@ def plot_times_in_ns_task(
                     if idx_a >= idx_b:
                         continue
 
-                    make_toa_correlation(board_a=board_a, board_b=board_b, data_df=pivot_data_df, base_path=Monet.task_path, run_name=Monet.run_name, extra_title=extra_title, full_html=full_html, range_x=range_toa, range_y=range_toa)
+                    make_toa_correlation_plot(board_a=board_a, board_b=board_b, data_df=pivot_data_df, base_path=Monet.task_path, run_name=Monet.run_name, extra_title=extra_title, full_html=full_html, range_x=range_toa, range_y=range_toa)
 
             fig = px.scatter_matrix(
                 pivot_data_df,
