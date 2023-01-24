@@ -66,18 +66,6 @@ def script_main(
                 min_tot=0,
                 extra_title=extra_title,
             )
-            plot_times_in_ns_task(
-                Geralt,
-                script_logger=script_logger,
-                task_name="plot_times_in_ns_final",
-                data_file=Geralt.get_task_path("calculate_times_in_ns")/'data.sqlite',
-                filter_files={"event": Geralt.path_directory/"event_filter.fd"},
-                max_toa=max_toa,
-                max_tot=max_tot,
-                min_toa=0,
-                min_tot=0,
-                extra_title=extra_title,
-            )
 
 if __name__ == '__main__':
     import argparse
