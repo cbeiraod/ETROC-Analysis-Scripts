@@ -264,9 +264,6 @@ def make_tot_vs_toa_plots(
     facet_col=None,
     facet_col_wrap=None,
     ):
-    if extra_title != "":
-        extra_title = "<br>" + extra_title
-
     if file_prepend != "":
         file_prepend += "_"
 
@@ -354,9 +351,6 @@ def make_boards_toa_correlation_plot(
     full_html:bool=False,
     range_toa = None,
     ):
-    if extra_title != "":
-        extra_title = "<br>" + extra_title
-
     min_x = data_df["time_of_arrival_ns_{}".format(board_a)].min()
     max_x = data_df["time_of_arrival_ns_{}".format(board_a)].max()
     min_y = data_df["time_of_arrival_ns_{}".format(board_b)].min()
@@ -581,7 +575,7 @@ def make_time_correlation_plot(
     )
 
 def make_time_plots(
-    data_df: pandas.DataFrame,
+    original_df: pandas.DataFrame,
     base_path: Path,
     run_name: str,
     task_name: str,
@@ -592,7 +586,121 @@ def make_time_plots(
     min_tot:float=-20,
     extra_title:str="",
     ):
-    pass
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if "accepted" in original_df:
+        df = original_df.query('accepted==True')
+    else:
+        df = original_df
+    #board_grouped_data_df = df.groupby(['data_board_id'])
+
+    # Build non-numeric categories for labels in plotly
+    df["data_board_id_cat"] = df["data_board_id"].astype(str)
+
+    # Get list of all board ids
+    board_ids = sorted(df["data_board_id"].unique())
+
+    # Create the pivot table with a column for each board
+    pivot_df = df.pivot(
+        index = 'event',
+        columns = 'data_board_id',
+        values = list(set(df.columns) - {'data_board_id', 'event'}),
+    )
+    # Rename columns so they are no longer hierarchical
+    pivot_df.columns = ["{}_{}".format(x, y) for x, y in pivot_df.columns]
+
+    # Calculate plot ranges
+    #   TOA
+    range_toa = None
+    min_toa_df = df["time_of_arrival_ns"].min()
+    max_toa_df = df["time_of_arrival_ns"].max()
+    if min_toa is None and max_toa is None:
+        range_toa = [min_toa_df, max_toa_df]
+    elif min_toa is not None and max_toa is not None:
+        range_toa = [min_toa, max_toa]
+    elif min_toa is None:
+        range_toa = [min_toa_df, max_toa]
+    else:
+        range_toa = [min_toa, max_toa_df]
+    #   TOT
+    range_tot = None
+    min_tot_df = df["time_over_threshold_ns"].min()
+    max_tot_df = df["time_over_threshold_ns"].max()
+    if min_tot is None and max_tot is None:
+        range_tot = [min_tot_df, max_tot_df]
+    elif min_tot is not None and max_tot is not None:
+        range_tot = [min_tot, max_tot]
+    elif min_tot is None:
+        range_tot = [min_tot_df, max_tot]
+    else:
+        range_tot = [min_tot, max_tot_df]
+
+    for board_id in board_ids:
+        board_df = df.loc[df["data_board_id"] == board_id]
+
+        make_tot_vs_toa_plots(
+            data_df=board_df,
+            base_path=base_path,
+            run_name=run_name,
+            full_html=full_html,
+            max_toa=max_toa,
+            max_tot=max_tot,
+            min_toa=min_toa,
+            min_tot=min_tot,
+            extra_title=extra_title,
+            file_prepend="Board{}".format(board_id),
+            subtitle="Board {}".format(board_id),
+        )
+
+    make_tot_vs_toa_plots(
+        data_df=df,
+        base_path=base_path,
+        run_name=run_name,
+        full_html=full_html,
+        max_toa=max_toa,
+        max_tot=max_tot,
+        min_toa=min_toa,
+        min_tot=min_tot,
+        extra_title=extra_title,
+        facet_col='data_board_id',
+        facet_col_wrap=2,
+    )
+
+    make_multi_scatter_plot(
+        data_df=df,
+        run_name=run_name,
+        task_name=task_name,
+        base_path=base_path,
+        color_column="data_board_id_cat",
+        full_html=full_html,
+        extra_title=extra_title,
+        additional_dimensions=["time_of_arrival_ns", "time_over_threshold_ns"],
+        additional_labels={
+            "time_over_threshold_ns": "Time over Threshold [ns]",
+            "time_of_arrival_ns": "Time of Arrival [ns]",
+        },
+    )
+
+
+    make_toa_correlation_plots(
+        data_df=pivot_df,
+        base_path=base_path,
+        run_name=run_name,
+        board_ids=board_ids,
+        range_toa=range_toa,
+        full_html=full_html,
+        extra_title=extra_title,
+    )
+
+    make_time_correlation_plot(
+        data_df=pivot_df,
+        base_path=base_path,
+        run_name=run_name,
+        board_ids=board_ids,
+        full_html=full_html,
+        extra_title=extra_title,
+    )
 
 def apply_event_filter(data_df: pandas.DataFrame, filter_df: pandas.DataFrame, filter_name: str = "event_filter"):
     reindexed_data_df = data_df.set_index('event')
@@ -671,99 +779,16 @@ def plot_times_in_ns_task(
                 script_logger=script_logger,
             )
 
-            full_df = data_df
-            if 'accepted' in data_df.columns:
-                data_df = full_df.loc[full_df['accepted']==True]
-            #board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
-
-            data_df["data_board_id_cat"] = data_df["data_board_id"].astype(str)
-
-            board_ids = sorted(data_df["data_board_id"].unique())
-
-            extra_title = ""
-
-            for board_id in board_ids:
-                board_df = data_df.loc[data_df["data_board_id"] == board_id]
-
-                make_tot_vs_toa_plots(
-                    data_df=board_df,
-                    base_path=Monet.task_path,
-                    run_name=Monet.run_name,
-                    full_html=full_html,
-                    max_toa=max_toa,
-                    max_tot=max_tot,
-                    min_toa=min_toa,
-                    min_tot=min_tot,
-                    extra_title=extra_title,
-                    file_prepend="Board{}".format(board_id),
-                    subtitle="Board {}".format(board_id),
-                )
-
-            make_tot_vs_toa_plots(
-                data_df=data_df,
+            make_time_plots(
+                data_df,
                 base_path=Monet.task_path,
                 run_name=Monet.run_name,
+                task_name=Monet.task_name,
                 full_html=full_html,
                 max_toa=max_toa,
                 max_tot=max_tot,
                 min_toa=min_toa,
                 min_tot=min_tot,
-                extra_title=extra_title,
-                facet_col='data_board_id',
-                facet_col_wrap=2,
-            )
-
-            make_multi_scatter_plot(
-                data_df=data_df,
-                run_name=Monet.run_name,
-                task_name=Monet.task_name,
-                base_path=Monet.task_path,
-                color_column="data_board_id_cat",
-                full_html=full_html,
-                extra_title=extra_title,
-                additional_dimensions=["time_of_arrival_ns", "time_over_threshold_ns"],
-                additional_labels={
-                    "time_over_threshold_ns": "Time over Threshold [ns]",
-                    "time_of_arrival_ns": "Time of Arrival [ns]",
-                },
-            )
-
-            pivot_data_df = data_df.pivot(
-                index = 'event',
-                columns = 'data_board_id',
-                values = list(set(data_df.columns) - {'data_board_id', 'event'}),
-            )
-            pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
-
-
-            range_toa = None
-            min_toa_df = data_df["time_of_arrival_ns"].min()
-            max_toa_df = data_df["time_of_arrival_ns"].max()
-            if min_toa is None and max_toa is None:
-                range_toa = [min_toa_df, max_toa_df]
-            elif min_toa is not None and max_toa is not None:
-                range_toa = [min_toa, max_toa]
-            elif min_toa is None:
-                range_toa = [min_toa_df, max_toa]
-            else:
-                range_toa = [min_toa, max_toa_df]
-
-            make_toa_correlation_plots(
-                data_df=pivot_data_df,
-                base_path=Monet.task_path,
-                run_name=Monet.run_name,
-                board_ids=board_ids,
-                range_toa=range_toa,
-                full_html=full_html,
-                extra_title=extra_title,
-            )
-
-            make_time_correlation_plot(
-                data_df=pivot_data_df,
-                base_path=Monet.task_path,
-                run_name=Monet.run_name,
-                board_ids=board_ids,
-                full_html=full_html,
                 extra_title=extra_title,
             )
 
