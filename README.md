@@ -60,7 +60,7 @@ The `process_etroc1_charge_injection_data_dir.py` script automatically processes
 
 The `analyse_dac_vs_charge.py` script ...
 
-The `reprocess_etroc1_charge_injection_data_dir.py` script ...
+The `reprocess_etroc1_charge_injection_data_dir.py` script effectively performs the same actions as the `process_etroc1_charge_injection_data_dir.py`, however it assumes the `process_etroc1_charge_injection_data_dir.py` script has been ran before. This reprocess script effectively allows to set new processing options as well as defining new cuts files for the individual runs.
 
 ### End of session
 
