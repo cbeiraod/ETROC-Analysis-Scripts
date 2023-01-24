@@ -119,7 +119,6 @@ def apply_event_cuts_task(
         with AdaLovelace.handle_task("apply_event_cuts", drop_old_data=drop_old_data) as Miso:
             if not (Miso.path_directory/"cuts.csv").is_file():
                 script_logger.info("A cuts file is not defined for run {}".format(AdaLovelace.run_name))
-                shutil.copy(Miso.path_directory/"data"/'data.sqlite', Miso.task_path/"data.sqlite")
             else:
                 with sqlite3.connect(Miso.path_directory/"data"/'data.sqlite') as input_sqlite3_connection:
                     cuts_df = pandas.read_csv(Miso.path_directory/"cuts.csv")
