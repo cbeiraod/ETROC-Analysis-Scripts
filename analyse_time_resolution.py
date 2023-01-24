@@ -76,8 +76,7 @@ def make_boards_toa_correlation_plot(
     run_name: str,
     extra_title: str = "",
     full_html:bool=False,
-    range_x = None,
-    range_y = None,
+    range_toa = None,
     ):
     if extra_title != "":
         extra_title = "<br>" + extra_title
@@ -87,23 +86,21 @@ def make_boards_toa_correlation_plot(
     min_y = data_df["time_of_arrival_ns_{}".format(board_b)].min()
     max_y = data_df["time_of_arrival_ns_{}".format(board_b)].max()
 
-    if range_x is None:
+    if range_toa is None:
         range_x = [min_x, max_x]
-    else:
-        range_x = [
-            max(min_x, range_x[0]),
-            min(max_x, range_x[1])
-        ]
-    if range_y is None:
         range_y = [min_y, max_y]
     else:
+        range_x = [
+            max(min_x, range_toa[0]),
+            min(max_x, range_toa[1])
+        ]
         range_y = [
-            max(min_y, range_y[0]),
-            min(max_y, range_y[1])
+            max(min_y, range_toa[0]),
+            min(max_y, range_toa[1])
         ]
 
-    nbinsx = ceil((range_x[1] - range_x[0]) * 40)
-    nbinsy = ceil((range_y[1] - range_y[0]) * 40)
+    nbinsx = ceil((range_x[1] - range_x[0]) * 40)  # 40 bins per unit (but it seems plotly uses this more as a suggestion)
+    nbinsy = ceil((range_y[1] - range_y[0]) * 40)  # 40 bins per unit (but it seems plotly uses this more as a suggestion)
 
     fig = px.scatter(
         data_df,
