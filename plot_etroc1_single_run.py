@@ -4,7 +4,6 @@ from pathlib import Path # Pathlib documentation, very useful if unfamiliar:
 import lip_pps_run_manager as RM
 
 import logging
-import shutil
 import pandas
 import sqlite3
 
@@ -280,4 +279,4 @@ def plot_etroc1_task(
             make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
 
 if __name__ == '__main__':
-    print("This is not a standalone script to run, it is run automatically as a part of the other scripts")
+    print("This is not a standalone script to run, it provides utilities which are run automatically as a part of the other scripts")
