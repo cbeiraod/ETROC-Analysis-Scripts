@@ -256,6 +256,55 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
+def make_toa_correlation_plot(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_ids: list[int],
+    full_html:bool=False,
+    extra_title: str = "",
+    ):
+
+    toa_dimensions = []
+    toa_labels = {}
+
+    for board_id in board_ids:
+        toa_dimensions += ["time_of_arrival_ns_{}".format(board_id)]
+        toa_labels["time_of_arrival_ns_{}".format(board_id)] = "Board {} TOA [ns]".format(board_id)
+
+    fig = px.scatter_matrix(
+        data_df,
+        dimensions = sorted(toa_dimensions),
+        labels = toa_labels,
+        title = 'TOA Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
+        opacity = 0.15,
+    )
+    fig.update_traces(
+        diagonal_visible = False,
+        showupperhalf = False,
+        marker = {'size': 3},
+    )
+    for k in range(len(fig.data)):
+        fig.data[k].update(
+            selected = dict(
+                marker = dict(
+                    #opacity = 1,
+                    #color = 'blue',
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    #opacity = 0.1,
+                    color="grey"
+                )
+            ),
+        )
+    fig.write_html(
+        base_path/'toa_correlation_matrix.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
 def make_time_correlation_plot(
     data_df: pandas.DataFrame,
     ):
