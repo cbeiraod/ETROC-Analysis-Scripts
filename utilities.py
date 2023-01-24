@@ -68,7 +68,7 @@ def make_multi_scatter_plot(
         include_plotlyjs = 'cdn',
     )
 
-def make_plots(
+def build_plots(
     original_df: pandas.DataFrame,
     run_name: str,
     task_name: str,
@@ -574,7 +574,7 @@ def make_time_correlation_plot(
         include_plotlyjs = 'cdn',
     )
 
-def make_time_plots(
+def build_time_plots(
     original_df: pandas.DataFrame,
     base_path: Path,
     run_name: str,
@@ -753,7 +753,7 @@ def plot_etroc1_task(
                 script_logger=script_logger,
             )
 
-            make_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
+            build_plots(df, Picasso.run_name, task_name, Picasso.task_path, extra_title=extra_title)
 
 def plot_times_in_ns_task(
     Fermat: RM.RunManager,
@@ -779,7 +779,7 @@ def plot_times_in_ns_task(
                 script_logger=script_logger,
             )
 
-            make_time_plots(
+            build_time_plots(
                 data_df,
                 base_path=Monet.task_path,
                 run_name=Monet.run_name,

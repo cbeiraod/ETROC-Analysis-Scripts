@@ -10,7 +10,7 @@ import numpy as np
 import sqlite3
 
 from utilities import plot_etroc1_task
-from utilities import make_plots
+from utilities import build_plots
 from utilities import apply_event_filter
 
 def data_df_apply_single_cut(
@@ -105,7 +105,7 @@ def apply_event_cuts(
             base_name = str(idx) + "-" + cut_row["output"]
             (base_path/base_name).mkdir(exist_ok=True)
             this_data_df = apply_event_filter(data_df, triggers_accepted_df)
-            make_plots(this_data_df, Johnny.run_name, Johnny.task_name, base_path/base_name, extra_title="Partial Cuts")
+            build_plots(this_data_df, Johnny.run_name, Johnny.task_name, base_path/base_name, extra_title="Partial Cuts")
             del this_data_df
 
     return triggers_accepted_df
