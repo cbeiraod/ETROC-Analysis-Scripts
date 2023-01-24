@@ -515,13 +515,24 @@ def plot_times_in_ns_task(
             pivot_data_df.columns = ["{}_{}".format(x, y) for x, y in pivot_data_df.columns]
 
 
+            range_toa = None
+            min_toa_df = data_df["time_of_arrival_ns"].min()
+            max_toa_df = data_df["time_of_arrival_ns"].max()
+            if min_toa is None and max_toa is None:
+                range_toa = [min_toa_df, max_toa_df]
+            elif min_toa is not None and max_toa is not None:
+                range_toa = [min_toa, max_toa]
+            elif min_toa is None:
+                range_toa = [min_toa_df, max_toa]
+            else:
+                range_toa = [min_toa, max_toa_df]
 
             make_toa_correlation_plots(
-                data_df,
+                data_df=pivot_data_df,
                 base_path=Monet.task_path,
                 run_name=Monet.run_name,
                 board_ids=board_ids,
-                range_toa=[min_toa, max_toa],
+                range_toa=range_toa,
                 full_html=full_html,
                 extra_title=extra_title,
             )
