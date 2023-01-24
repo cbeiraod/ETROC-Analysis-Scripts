@@ -13,6 +13,16 @@ from cut_etroc1_single_run import script_main as cut_single_run
 
 import plotly.express as px
 
+def apply_cuts_to_single_runs_subtask(
+    Turing: RM.TaskManager,
+    script_logger: logging.Logger,
+    run_dirs: list[Path],
+    make_plots:bool = False,
+    ):
+    for file_directory in run_dirs:
+        # Apply cuts
+        cut_single_run(file_directory, drop_old_data=True, make_plots=make_plots)
+
 def process_etroc1_data_directory_task(
     AdaLovelace: RM.RunManager,
     script_logger: logging.Logger,
@@ -22,10 +32,12 @@ def process_etroc1_data_directory_task(
     first_time:bool = True,
 ):
     with AdaLovelace.handle_task("process_etroc1_data_directory", drop_old_data=True) as Turing:
+        run_dirs = []
         for file in run_files:
             path = Path(file)
             file_base_name = str(path.name)[:-12]
             file_directory = AdaLovelace.path_directory/"Individual_Runs"/file_base_name
+            run_dirs += [file_directory]
 
             if first_time:
                 # Convert from RAW data format to our format
@@ -36,8 +48,12 @@ def process_etroc1_data_directory_task(
                     cuts_file.write("board_id,variable,cut_type,cut_value,output\n")
                     cuts_file.write("#,calibration_code,<,200")
 
-            # Apply cuts
-            cut_single_run(file_directory, drop_old_data=True, make_plots=make_plots)
+        apply_cuts_to_single_runs_subtask(
+            Turing,
+            script_logger=script_logger,
+            run_dirs=run_dirs,
+            make_plots=make_plots,
+        )
 
 def merge_etroc1_runs_task(
     AdaLovelace: RM.RunManager,
