@@ -265,7 +265,6 @@ def make_time_correlation_plot(
     pass
 
 def make_time_plots(
-    Monet: RM.TaskManager,
     data_df: pandas.DataFrame,
     base_path: Path,
     run_name: str,
