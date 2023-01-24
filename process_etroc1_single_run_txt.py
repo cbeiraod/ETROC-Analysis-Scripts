@@ -10,7 +10,7 @@ import numpy
 import numpy.typing
 import sqlite3
 
-from plot_etroc1_single_run import plot_etroc1_task
+from utilities import plot_etroc1_task
 
 # Rolling window match taken from: https://stackoverflow.com/a/49005205
 def rolling_window(array: numpy.typing.ArrayLike, window_size: int):

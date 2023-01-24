@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from math import ceil
 from math import floor
 
-from plot_etroc1_single_run import make_multi_scatter_plot
+from utilities import make_multi_scatter_plot
 
 def calculate_times_in_ns_task(
     Fermat: RM.RunManager,

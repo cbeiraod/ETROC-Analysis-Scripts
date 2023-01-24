@@ -8,7 +8,7 @@ import shutil
 import pandas
 import sqlite3
 
-from plot_etroc1_single_run import plot_etroc1_task
+from utilities import plot_etroc1_task
 from process_etroc1_charge_injection_data_dir import plot_etroc1_combined_task
 from analyse_dac_vs_charge import plot_dac_vs_charge_task
 from calculate_times_in_ns import plot_times_in_ns_task

@@ -8,7 +8,7 @@ import shutil
 import pandas
 import sqlite3
 
-from plot_etroc1_single_run import plot_etroc1_task
+from utilities import plot_etroc1_task
 
 def proccess_etroc1_run_task(
     AdaLovelace: RM.RunManager,

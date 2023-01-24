@@ -9,8 +9,8 @@ import pandas
 import numpy as np
 import sqlite3
 
-from plot_etroc1_single_run import plot_etroc1_task
-from plot_etroc1_single_run import make_plots
+from utilities import plot_etroc1_task
+from utilities import make_plots
 
 def data_df_apply_single_cut(
     data_df: pandas.DataFrame,
