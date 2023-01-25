@@ -19,19 +19,25 @@ def data_df_apply_single_cut(
     variable:str,
     cut_type:str,
     cut_value:str,
+    keep_nan:bool=False,
     ):
+    if keep_nan:
+        extra_rows_to_keep = data_df[(variable, board_id)].isna()
+    else:
+        extra_rows_to_keep = False
+
     if cut_type == '<':
-        return data_df[(variable, board_id)] < cut_value
+        return ((data_df[(variable, board_id)] < cut_value) | extra_rows_to_keep)
     elif cut_type == '<=':
-        return data_df[(variable, board_id)] <= cut_value
+        return ((data_df[(variable, board_id)] <= cut_value) | extra_rows_to_keep)
     elif cut_type == '>':
-        return data_df[(variable, board_id)] > cut_value
+        return ((data_df[(variable, board_id)] > cut_value) | extra_rows_to_keep)
     elif cut_type == '>=':
-        return data_df[(variable, board_id)] >= cut_value
+        return ((data_df[(variable, board_id)] >= cut_value) | extra_rows_to_keep)
     elif cut_type == '==':
-        return data_df[(variable, board_id)] == cut_value
+        return ((data_df[(variable, board_id)] == cut_value) | extra_rows_to_keep)
     elif cut_type == '<>':
-        return data_df[(variable, board_id)] != cut_value
+        return ((data_df[(variable, board_id)] != cut_value) | extra_rows_to_keep)
     else:
         raise ValueError('Received a cut of type `cut_type: {}`, dont know that that is...'.format(cut_type))
 
@@ -42,14 +48,15 @@ def df_apply_cut(
     variable:str,
     cut_type:str,
     cut_value:str,
+    keep_nan:bool=False,
     ):
     if board_id != "*" and board_id != "#":
-        df['accepted'] &= data_df_apply_single_cut(data_df, int(board_id), variable, cut_type, cut_value)
+        df['accepted'] &= data_df_apply_single_cut(data_df, int(board_id), variable, cut_type, cut_value, keep_nan=keep_nan)
     else:
         full_cut = None
         board_ids = data_df.stack().reset_index(level="data_board_id")["data_board_id"].unique()
         for this_board_id in board_ids:
-            cut = data_df_apply_single_cut(data_df, int(this_board_id), variable, cut_type, cut_value)
+            cut = data_df_apply_single_cut(data_df, int(this_board_id), variable, cut_type, cut_value, keep_nan=keep_nan)
             if full_cut is None:
                 full_cut = cut
             else:
@@ -68,6 +75,7 @@ def apply_event_cuts(
     cuts_df: pandas.DataFrame,
     script_logger: logging.Logger,
     Johnny: RM.TaskManager,
+    keep_events_without_data:bool = False,
     ):
     """
     Given a dataframe `cuts_df` with one cut per row, e.g.
@@ -98,7 +106,7 @@ def apply_event_cuts(
 
     triggers_accepted_df = pandas.DataFrame({'accepted': True}, index=pivot_data_df.index)
     for idx, cut_row in cuts_df.iterrows():
-        triggers_accepted_df = df_apply_cut(triggers_accepted_df, pivot_data_df, cut_row['board_id'], cut_row['variable'], cut_row['cut_type'], cut_row['cut_value'])
+        triggers_accepted_df = df_apply_cut(triggers_accepted_df, pivot_data_df, cut_row['board_id'], cut_row['variable'], cut_row['cut_type'], cut_row['cut_value'], keep_nan=keep_events_without_data)
 
         if "output" in cut_row and isinstance(cut_row["output"], str):
             script_logger.info("Making partial cut plots after cut {}:\n{}".format(idx, cut_row))
@@ -114,6 +122,7 @@ def apply_event_cuts_task(
     AdaLovelace: RM.RunManager,
     script_logger: logging.Logger,
     drop_old_data:bool=True,
+    keep_events_without_data:bool = False,
 ):
     if AdaLovelace.task_completed("proccess_etroc1_data_run") or AdaLovelace.task_completed("proccess_etroc1_data_run_txt"):
         with AdaLovelace.handle_task("apply_event_cuts", drop_old_data=drop_old_data) as Miso:
@@ -134,7 +143,7 @@ def apply_event_cuts_task(
 
                     input_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
 
-                    filtered_events_df = apply_event_cuts(input_df, cuts_df, script_logger=script_logger, Johnny=Miso)
+                    filtered_events_df = apply_event_cuts(input_df, cuts_df, script_logger=script_logger, Johnny=Miso, keep_events_without_data=keep_events_without_data)
 
                     script_logger.info('Saving run event filter metadata...')
                     filtered_events_df.reset_index().to_feather(Miso.task_path/'event_filter.fd')
@@ -143,7 +152,8 @@ def apply_event_cuts_task(
 def script_main(
         output_directory:Path,
         drop_old_data:bool=True,
-        make_plots:bool=True
+        make_plots:bool=True,
+        keep_events_without_data:bool=False,
         ):
 
     script_logger = logging.getLogger('apply_event_cuts')
@@ -155,6 +165,7 @@ def script_main(
             Bob,
             script_logger=script_logger,
             drop_old_data=drop_old_data,
+            keep_events_without_data=keep_events_without_data,
         )
 
         if Bob.task_completed("apply_event_cuts") and make_plots:
@@ -189,6 +200,13 @@ if __name__ == '__main__':
         dest = 'out_directory',
         type = str,
     )
+    parser.add_argument(
+        '-k',
+        '--keep-events',
+        help = 'Normally, when applying cuts if a certain board does not have data for a given event, the cut will remove that event. If set, these events will be kept instead.',
+        action = 'store_true',
+        dest = 'keep_events_without_data',
+    )
 
     args = parser.parse_args()
 
@@ -208,4 +226,4 @@ if __name__ == '__main__':
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
 
-    script_main(Path(args.out_directory))
+    script_main(Path(args.out_directory), keep_events_without_data=args.keep_events_without_data)
