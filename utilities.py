@@ -772,6 +772,8 @@ def build_time_plots(
         df = original_df
     #board_grouped_data_df = df.groupby(['data_board_id'])
 
+    df.sort_values(["event", "data_board_id"], inplace=True)
+
     # Build non-numeric categories for labels in plotly
     df["data_board_id_cat"] = df["data_board_id"].astype(str)
 
