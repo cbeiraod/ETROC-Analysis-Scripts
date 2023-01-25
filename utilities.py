@@ -585,6 +585,11 @@ def build_plots(
     else:
         df = original_df
 
+    #print(df)
+    #print(df.sort_values(["data_board_id", "event"]))
+    df.sort_values(["data_board_id", "event"], inplace=True)
+    #df.sort_values(["data_board_id", "event"]).reset_index(drop=True)
+
     fig = go.Figure()
     for board_id in df["data_board_id"].unique():
         fig.add_trace(go.Histogram(
