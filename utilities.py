@@ -585,13 +585,8 @@ def build_plots(
     else:
         df = original_df
 
-    #print(df)
-    #print(df.sort_values(["data_board_id", "event"]))
-    df.sort_values(["data_board_id", "event"], inplace=True)
-    #df.sort_values(["data_board_id", "event"]).reset_index(drop=True)
-
     fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
+    for board_id in sorted(df["data_board_id"].unique()):
         fig.add_trace(go.Histogram(
             x=df.loc[df["data_board_id"] == board_id]["calibration_code"],
             name='Board {}'.format(board_id), # name used in legend and hover labels
@@ -624,7 +619,7 @@ def build_plots(
     )
 
     fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
+    for board_id in sorted(df["data_board_id"].unique()):
         fig.add_trace(go.Histogram(
             x=df.loc[df["data_board_id"] == board_id]["time_of_arrival"],
             name='Board {}'.format(board_id), # name used in legend and hover labels
@@ -660,7 +655,7 @@ def build_plots(
     )
 
     fig = go.Figure()
-    for board_id in df["data_board_id"].unique():
+    for board_id in sorted(df["data_board_id"].unique()):
         fig.add_trace(go.Histogram(
             x=df.loc[df["data_board_id"] == board_id]["time_over_threshold"],
             name='Board {}'.format(board_id), # name used in legend and hover labels
@@ -691,9 +686,10 @@ def build_plots(
         include_plotlyjs = 'cdn',
     )
 
-    df["data_board_id_cat"] = df["data_board_id"].astype(str)
+    sorted_df = df.sort_values(["data_board_id", "event"])
+    sorted_df["data_board_id_cat"] = sorted_df["data_board_id"].astype(str)
     make_multi_scatter_plot(
-        data_df=df,
+        data_df=sorted_df,
         run_name=run_name,
         task_name=task_name,
         base_path=base_path,
@@ -705,7 +701,7 @@ def build_plots(
     if len(df) == 0:  # The heatmaps (2D Histograms) seem to break when the dataframe has no data
         return
 
-    for board_id in df["data_board_id"].unique():
+    for board_id in sorted(df["data_board_id"].unique()):
         board_df = df.loc[df["data_board_id"] == board_id]
 
         fig = px.density_heatmap(
@@ -734,7 +730,7 @@ def build_plots(
         )
 
     fig = px.density_heatmap(
-        df,
+        sorted_df,
         x="time_over_threshold",
         y="time_of_arrival",
         labels = {
