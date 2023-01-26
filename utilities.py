@@ -912,6 +912,8 @@ def filter_dataframe(
 
             if filter == "event":
                 df = apply_event_filter(df, filter_df)
+            elif filter == "time":
+                df = apply_event_filter(df, filter_df, filter_name="time_filter")
         else:
             script_logger.error("The filter file {} does not exist".format(filter_files[filter]))
 
