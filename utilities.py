@@ -160,6 +160,182 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
+def make_boards_cal_correlation_plot(
+    board_a:int,
+    board_b:int,
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    extra_title: str = "",
+    full_html:bool=False,
+    range_toa = None,
+    ):
+    min_x = data_df["calibration_code_{}".format(board_a)].min()
+    max_x = data_df["calibration_code_{}".format(board_a)].max()
+    min_y = data_df["calibration_code_{}".format(board_b)].min()
+    max_y = data_df["calibration_code_{}".format(board_b)].max()
+
+    if range_toa is None:
+        range_x = [min_x, max_x]
+        range_y = [min_y, max_y]
+    else:
+        range_x = [
+            max(min_x, range_toa[0]),
+            min(max_x, range_toa[1])
+        ]
+        range_y = [
+            max(min_y, range_toa[0]),
+            min(max_y, range_toa[1])
+        ]
+
+    nbinsx = ceil((range_x[1] - range_x[0]) * 40)  # 40 bins per unit (but it seems plotly uses this more as a suggestion)
+    nbinsy = ceil((range_y[1] - range_y[0]) * 40)  # 40 bins per unit (but it seems plotly uses this more as a suggestion)
+
+    fig = px.scatter(
+        data_df,
+        x="calibration_code_{}".format(board_a),
+        y="calibration_code_{}".format(board_b),
+        labels = {
+            "calibration_code_{}".format(board_a): "Board {} Calibration Code".format(board_a),
+            "calibration_code_{}".format(board_b): "Board {} Calibration Code".format(board_b),
+        },
+        title = "Calibration code correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, run_name, extra_title),
+        opacity = 0.1,
+        trendline="ols",
+        range_x=range_x,
+        range_y=range_y,
+    )
+
+    model = px.get_trendline_results(fig)
+    alpha = model.iloc[0]["px_fit_results"].params[0]
+    beta = model.iloc[0]["px_fit_results"].params[1]
+    rsq = model.iloc[0]["px_fit_results"].rsquared
+
+    fig.data[0].name = 'data'
+    fig.data[0].showlegend = True
+    fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
+    fig.data[1].showlegend = True
+    fig.data[1].line.color = 'red'
+    #fig.data[1].line.dash = 'dash'
+    trendline = fig.data[1]
+
+    fig.write_html(
+        base_path/'cal_board{}_vs_board{}_scatter.html'.format(board_a, board_b),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    fig = px.density_heatmap(
+        data_df,
+        x="calibration_code_{}".format(board_a),
+        y="calibration_code_{}".format(board_b),
+        labels = {
+            "calibration_code_{}".format(board_a): "Board {} Calibration code [ns]".format(board_a),
+            "calibration_code_{}".format(board_b): "Board {} Calibration code [ns]".format(board_b),
+        },
+        color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        title = "Calibration code correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, run_name, extra_title),
+        range_x=range_x,
+        range_y=range_y,
+        nbinsx=nbinsx,
+        nbinsy=nbinsy,
+    )
+
+    #trendline.showlegend = False
+    fig.add_trace(trendline)
+
+    fig.write_html(
+        base_path/'cal_board{}_vs_board{}.html'.format(board_a, board_b),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+def make_cal_correlation_plot(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_ids: list[int],
+    full_html:bool=False,
+    extra_title: str = "",
+    ):
+
+    toa_dimensions = []
+    toa_labels = {}
+
+    for board_id in board_ids:
+        toa_dimensions += ["calibration_code_{}".format(board_id)]
+        toa_labels["calibration_code_{}".format(board_id)] = "Board {} Calibration code [ns]".format(board_id)
+
+    fig = px.scatter_matrix(
+        data_df,
+        dimensions = sorted(toa_dimensions),
+        labels = toa_labels,
+        title = 'Calibration code Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
+        opacity = 0.15,
+    )
+    fig.update_traces(
+        diagonal_visible = False,
+        showupperhalf = False,
+        marker = {'size': 3},
+    )
+    for k in range(len(fig.data)):
+        fig.data[k].update(
+            selected = dict(
+                marker = dict(
+                    #opacity = 1,
+                    #color = 'blue',
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    #opacity = 0.1,
+                    color="grey"
+                )
+            ),
+        )
+    fig.write_html(
+        base_path/'cal_correlation_matrix.html',
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+def make_cal_correlation_plots(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_ids: list[int],
+    range_toa:list[float]=[-20,20],
+    full_html:bool=False,
+    extra_title: str = "",
+    ):
+
+    make_cal_correlation_plot(
+        data_df,
+        base_path=base_path,
+        run_name=run_name,
+        board_ids=board_ids,
+        full_html=full_html,
+        extra_title=extra_title,
+    )
+
+    for idx_a in range(len(board_ids)):
+        board_a = board_ids[idx_a]
+        for idx_b in range(len(board_ids)):
+            board_b = board_ids[idx_b]
+            if idx_a >= idx_b:
+                continue
+
+            make_boards_cal_correlation_plot(
+                board_a=board_a,
+                board_b=board_b,
+                data_df=data_df,
+                base_path=base_path,
+                run_name=run_name,
+                extra_title=extra_title,
+                full_html=full_html,
+                range_toa=range_toa,
+            )
+
 def make_boards_toa_correlation_plot(
     board_a:int,
     board_b:int,
