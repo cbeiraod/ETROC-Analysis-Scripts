@@ -671,62 +671,6 @@ def make_tot_correlation_plots(
                 range_tot=range_tot,
             )
 
-
-def make_calcode_correlation_plot(
-    data_df: pandas.DataFrame,
-    base_path: Path,
-    run_name: str,
-    board_ids: list[int],
-    full_html:bool=False,
-    extra_title: str = "",
-    ):
-    dimensions = []
-    labels = {}
-
-    # The two loops are separated so that the dimensions are in the order we choose, i.e. toa before tot
-    for board_id in board_ids:
-        dimension = "calibration_code_{}".format(board_id)
-        label = "Board {} Calibration Code".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
-
-    for board_id in board_ids:
-        dimension = "calibration_code_{}".format(board_id)
-        label = "Board {} Calibration Code".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
-
-    fig = px.scatter_matrix(
-        data_df,
-        dimensions=dimensions + dimensions,
-        labels = labels,
-        title = "Scatter plot correlating calibration codes between boards<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
-        opacity = 0.4,
-    )
-    fig.update_traces(
-        diagonal_visible=False,
-        showupperhalf=False,
-        marker = {'size': 3},
-    )
-    for k in range(len(fig.data)):
-        fig.data[k].update(
-            selected = dict(
-                marker = dict(
-                )
-            ),
-            unselected = dict(
-                marker = dict(
-                    color="grey"
-                )
-            ),
-        )
-    fig.write_html(
-        base_path/'calcode_scatter.html',
-        full_html = full_html,
-        include_plotlyjs = 'cdn',
-    )
-
-
 def make_time_correlation_plot(
     data_df: pandas.DataFrame,
     base_path: Path,
