@@ -175,17 +175,17 @@ def make_boards_calcode_correlation_plot(
     min_y = data_df["calibration_code_{}".format(board_b)].min()
     max_y = data_df["calibration_code_{}".format(board_b)].max()
 
-    if range_toa is None:
+    if range_cal is None:
         range_x = [min_x, max_x]
         range_y = [min_y, max_y]
     else:
         range_x = [
-            max(min_x, range_toa[0]),
-            min(max_x, range_toa[1])
+            max(min_x, range_cal[0]),
+            min(max_x, range_cal[1])
         ]
         range_y = [
-            max(min_y, range_toa[0]),
-            min(max_y, range_toa[1])
+            max(min_y, range_cal[0]),
+            min(max_y, range_cal[1])
         ]
 
     nbinsx = ceil((range_x[1] - range_x[0]) * 40)  # 40 bins per unit (but it seems plotly uses this more as a suggestion)
@@ -200,24 +200,10 @@ def make_boards_calcode_correlation_plot(
             "calibration_code_{}".format(board_b): "Board {} Calibration Code".format(board_b),
         },
         title = "Calibration code correlation between board {} and board {}<br><sup>Run: {}{}</sup>".format(board_a, board_b, run_name, extra_title),
-        opacity = 0.1,
-        trendline="ols",
+        opacity = 0.5,
         range_x=range_x,
         range_y=range_y,
     )
-
-    model = px.get_trendline_results(fig)
-    alpha = model.iloc[0]["px_fit_results"].params[0]
-    beta = model.iloc[0]["px_fit_results"].params[1]
-    rsq = model.iloc[0]["px_fit_results"].rsquared
-
-    fig.data[0].name = 'data'
-    fig.data[0].showlegend = True
-    fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
-    fig.data[1].showlegend = True
-    fig.data[1].line.color = 'red'
-    #fig.data[1].line.dash = 'dash'
-    trendline = fig.data[1]
 
     fig.write_html(
         base_path/'cal_board{}_vs_board{}_scatter.html'.format(board_a, board_b),
@@ -241,9 +227,6 @@ def make_boards_calcode_correlation_plot(
         nbinsy=nbinsy,
     )
 
-    #trendline.showlegend = False
-    fig.add_trace(trendline)
-
     fig.write_html(
         base_path/'cal_board{}_vs_board{}.html'.format(board_a, board_b),
         full_html = full_html,
@@ -263,15 +246,15 @@ def make_calcode_correlation_plot(
     cal_labels = {}
 
     for board_id in board_ids:
-        toa_dimensions += ["calibration_code_{}".format(board_id)]
-        toa_labels["calibration_code_{}".format(board_id)] = "Board {} Calibration code [ns]".format(board_id)
+        cal_dimensions += ["calibration_code_{}".format(board_id)]
+        cal_labels["calibration_code_{}".format(board_id)] = "Board {} Calibration code [ns]".format(board_id)
 
     fig = px.scatter_matrix(
         data_df,
-        dimensions = sorted(toa_dimensions),
-        labels = toa_labels,
+        dimensions = sorted(cal_dimensions),
+        labels = cal_labels,
         title = 'Calibration code Correlation Matrix<br><sup>Run: {}{}</sup>'.format(run_name, extra_title),
-        opacity = 0.15,
+        opacity = 0.5,
     )
     fig.update_traces(
         diagonal_visible = False,
@@ -325,7 +308,7 @@ def make_calcode_correlation_plots(
             if idx_a >= idx_b:
                 continue
 
-            make_boards_cal_correlation_plot(
+            make_boards_calcode_correlation_plot(
                 board_a=board_a,
                 board_b=board_b,
                 data_df=data_df,
@@ -928,6 +911,11 @@ def build_plots(
     )
 
     # To creat cal code distributions scatter
+
+    # Get list of all board ids
+    board_ids = sorted(df["data_board_id"].unique())
+    range_cal = [0, 1024]
+
     # Copied pivot_df from build_time_plots
     # Create the pivot table with a column for each board
     pivot_df = df.pivot(
