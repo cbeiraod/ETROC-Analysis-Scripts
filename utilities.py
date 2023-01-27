@@ -160,7 +160,7 @@ def make_tot_vs_toa_plots(
         include_plotlyjs = 'cdn',
     )
 
-def make_boards_cal_correlation_plot(
+def make_boards_calcode_correlation_plot(
     board_a:int,
     board_b:int,
     data_df: pandas.DataFrame,
@@ -168,7 +168,7 @@ def make_boards_cal_correlation_plot(
     run_name: str,
     extra_title: str = "",
     full_html:bool=False,
-    range_toa = None,
+    range_cal = None,
     ):
     min_x = data_df["calibration_code_{}".format(board_a)].min()
     max_x = data_df["calibration_code_{}".format(board_a)].max()
@@ -250,7 +250,7 @@ def make_boards_cal_correlation_plot(
         include_plotlyjs = 'cdn',
     )
 
-def make_cal_correlation_plot(
+def make_calcode_correlation_plot(
     data_df: pandas.DataFrame,
     base_path: Path,
     run_name: str,
@@ -259,8 +259,8 @@ def make_cal_correlation_plot(
     extra_title: str = "",
     ):
 
-    toa_dimensions = []
-    toa_labels = {}
+    cal_dimensions = []
+    cal_labels = {}
 
     for board_id in board_ids:
         toa_dimensions += ["calibration_code_{}".format(board_id)]
@@ -299,17 +299,17 @@ def make_cal_correlation_plot(
         include_plotlyjs = 'cdn',
     )
 
-def make_cal_correlation_plots(
+def make_calcode_correlation_plots(
     data_df: pandas.DataFrame,
     base_path: Path,
     run_name: str,
     board_ids: list[int],
-    range_toa:list[float]=[-20,20],
+    range_cal:list[float]=[0,1024],
     full_html:bool=False,
     extra_title: str = "",
     ):
 
-    make_cal_correlation_plot(
+    make_calcode_correlation_plot(
         data_df,
         base_path=base_path,
         run_name=run_name,
@@ -333,7 +333,7 @@ def make_cal_correlation_plots(
                 run_name=run_name,
                 extra_title=extra_title,
                 full_html=full_html,
-                range_toa=range_toa,
+                range_cal=range_cal,
             )
 
 def make_boards_toa_correlation_plot(
@@ -925,6 +925,27 @@ def build_plots(
         base_path/'TOT_vs_TOA.html',
         full_html = full_html,
         include_plotlyjs = 'cdn',
+    )
+
+    # To creat cal code distributions scatter
+    # Copied pivot_df from build_time_plots
+    # Create the pivot table with a column for each board
+    pivot_df = df.pivot(
+        index = 'event',
+        columns = 'data_board_id',
+        values = list(set(df.columns) - {'data_board_id', 'event'}),
+    )
+    # Rename columns so they are no longer hierarchical
+    pivot_df.columns = ["{}_{}".format(x, y) for x, y in pivot_df.columns]
+
+    make_calcode_correlation_plots(
+        data_df=pivot_df,
+        base_path=base_path,
+        run_name=run_name,
+        board_ids=board_ids,
+        range_cal=range_cal,
+        full_html=full_html,
+        extra_title=extra_title,
     )
 
 def build_time_plots(
