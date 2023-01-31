@@ -11,33 +11,6 @@ import plotly.graph_objects as go
 
 from utilities import apply_event_filter, filter_dataframe
 
-def calculate_times_in_ns_task(
-    Fermat: RM.RunManager,
-    script_logger: logging.Logger,
-    drop_old_data:bool=True,
-    fbin_choice:str="mean",
-    ):
-    if Fermat.task_completed("apply_event_cuts"):
-        with Fermat.handle_task("calculate_times_in_ns", drop_old_data=drop_old_data) as Einstein:
-            with sqlite3.connect(Einstein.path_directory/"data"/'data.sqlite') as input_sqlite3_connection, \
-                 sqlite3.connect(Einstein.task_path/'data.sqlite') as output_sqlite3_connection:
-                data_df = pandas.read_sql('SELECT * FROM etroc1_data', input_sqlite3_connection, index_col=None)
-
-                filter_df = pandas.read_feather(Einstein.path_directory/"event_filter.fd")
-                filter_df.set_index("event", inplace=True)
-
-                from cut_etroc1_single_run import apply_event_filter
-                data_df = apply_event_filter(data_df, filter_df)
-                accepted_data_df = data_df.loc[data_df['accepted']==True]
-                board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
-
-                data_df.drop(labels=['accepted', 'event_filter'], axis=1, inplace=True)
-
-                data_df.to_sql('etroc1_data',
-                               output_sqlite3_connection,
-                               index=False,
-                               if_exists='replace')
-
 def plot_cal_code_task(
     Fermat: RM.RunManager,
     script_logger: logging.Logger,
@@ -48,7 +21,7 @@ def plot_cal_code_task(
     extra_title: str = "",
     full_html:bool=False,
     ):
-    
+
     with Fermat.handle_task(task_name, drop_old_data=drop_old_data) as Monet:
         base_path=Monet.task_path
         run_name=Monet.run_name,
@@ -61,19 +34,26 @@ def plot_cal_code_task(
                 script_logger=script_logger,
             )
 
+            filter_df = pandas.read_feather(Monet.path_directory/"event_filter.fd")
+            filter_df.set_index("event", inplace=True)
+
+            from cut_etroc1_single_run import apply_event_filter
+            data_df = apply_event_filter(data_df, filter_df)
+            df = data_df.loc[data_df['accepted']==True]
+
             # Even - Even
             fig = go.Figure()
-            for board_id in sorted(data_df["data_board_id"].unique()):
-                condition = (data_df["data_board_id"] == board_id) & (data_df["time_of_arrival"]%2 == 0) & (data_df["calibration_code"]%2 == 0)
+            for board_id in sorted(df["data_board_id"].unique()):
+                condition = (df["data_board_id"] == board_id) & (df["time_of_arrival"]%2 == 0) & (df["calibration_code"]%2 == 0)
                 fig.add_trace(go.Histogram(
-                    x=data_df.loc[condition]["calibration_code"],
+                    x=df.loc[condition]["calibration_code"],
                     name='Board {}'.format(board_id), # name used in legend and hover labels
                     opacity=0.5,
                     bingroup=1,
                 ))
             fig.update_layout(
                 barmode='overlay',
-                title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                title_text="Histogram of Even Calibration Code when Even TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
                 xaxis_title_text='Calibration Code', # xaxis label
                 yaxis_title_text='Count', # yaxis label
             )
@@ -87,17 +67,17 @@ def plot_cal_code_task(
 
             # Even - Odd
             fig = go.Figure()
-            for board_id in sorted(data_df["data_board_id"].unique()):
-                condition = (data_df["data_board_id"] == board_id) & (data_df["time_of_arrival"]%2 == 0) & (data_df["calibration_code"]%2 == 1)
+            for board_id in sorted(df["data_board_id"].unique()):
+                condition = (df["data_board_id"] == board_id) & (df["time_of_arrival"]%2 == 0) & (df["calibration_code"]%2 == 1)
                 fig.add_trace(go.Histogram(
-                    x=data_df.loc[condition]["calibration_code"],
+                    x=df.loc[condition]["calibration_code"],
                     name='Board {}'.format(board_id), # name used in legend and hover labels
                     opacity=0.5,
                     bingroup=1,
                 ))
             fig.update_layout(
                 barmode='overlay',
-                title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                title_text="Histogram of Even Calibration Code when Odd TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
                 xaxis_title_text='Calibration Code', # xaxis label
                 yaxis_title_text='Count', # yaxis label
             )
@@ -109,19 +89,19 @@ def plot_cal_code_task(
                 include_plotlyjs = 'cdn',
             )
 
-            # Odd - Odd
+            # Odd - Even
             fig = go.Figure()
-            for board_id in sorted(data_df["data_board_id"].unique()):
-                condition = (data_df["data_board_id"] == board_id) & (data_df["time_of_arrival"]%2 == 1) & (data_df["calibration_code"]%2 == 0)
+            for board_id in sorted(df["data_board_id"].unique()):
+                condition = (df["data_board_id"] == board_id) & (df["time_of_arrival"]%2 == 1) & (df["calibration_code"]%2 == 0)
                 fig.add_trace(go.Histogram(
-                    x=data_df.loc[condition]["calibration_code"],
+                    x=df.loc[condition]["calibration_code"],
                     name='Board {}'.format(board_id), # name used in legend and hover labels
                     opacity=0.5,
                     bingroup=1,
                 ))
             fig.update_layout(
                 barmode='overlay',
-                title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                title_text="Histogram of Even Calibration Code with Odd TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
                 xaxis_title_text='Calibration Code', # xaxis label
                 yaxis_title_text='Count', # yaxis label
             )
@@ -133,19 +113,19 @@ def plot_cal_code_task(
                 include_plotlyjs = 'cdn',
             )
 
-            # Odd - Even
+            # Odd - Odd
             fig = go.Figure()
-            for board_id in sorted(data_df["data_board_id"].unique()):
-                condition = (data_df["data_board_id"] == board_id) & (data_df["time_of_arrival"]%2 == 1) & (data_df["calibration_code"]%2 == 1)
+            for board_id in sorted(df["data_board_id"].unique()):
+                condition = (df["data_board_id"] == board_id) & (df["time_of_arrival"]%2 == 1) & (df["calibration_code"]%2 == 1)
                 fig.add_trace(go.Histogram(
-                    x=data_df.loc[condition]["calibration_code"],
+                    x=df.loc[condition]["calibration_code"],
                     name='Board {}'.format(board_id), # name used in legend and hover labels
                     opacity=0.5,
                     bingroup=1,
                 ))
             fig.update_layout(
                 barmode='overlay',
-                title_text="Histogram of Calibration Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                title_text="Histogram of Odd Calibration Code with Odd TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
                 xaxis_title_text='Calibration Code', # xaxis label
                 yaxis_title_text='Count', # yaxis label
             )
@@ -176,8 +156,6 @@ def script_main(
 
         if not Fermat.task_completed("apply_event_cuts"):
             raise RuntimeError("You can only run this script after applying event cuts")
-
-        calculate_times_in_ns_task(Fermat, script_logger=script_logger)
 
         plot_cal_code_task(
             Fermat,
