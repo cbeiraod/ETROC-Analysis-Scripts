@@ -108,7 +108,7 @@ def plot_cal_code_task(
             fig.update_yaxes(type="log")
 
             fig.write_html(
-                base_path/'calibration_code_histogram_oddTOA_oddCAL.html',
+                base_path/'calibration_code_histogram_oddTOA_EvenCAL.html',
                 full_html = full_html,
                 include_plotlyjs = 'cdn',
             )
@@ -132,7 +132,7 @@ def plot_cal_code_task(
             fig.update_yaxes(type="log")
 
             fig.write_html(
-                base_path/'calibration_code_histogram_oddTOA_evenCAL.html',
+                base_path/'calibration_code_histogram_oddTOA_oddCAL.html',
                 full_html = full_html,
                 include_plotlyjs = 'cdn',
             )    
