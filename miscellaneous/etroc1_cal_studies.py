@@ -77,7 +77,7 @@ def plot_cal_code_task(
                 ))
             fig.update_layout(
                 barmode='overlay',
-                title_text="Histogram of Even Calibration Code when Odd TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
+                title_text="Histogram of Odd Calibration Code when Even TOA Code<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
                 xaxis_title_text='Calibration Code', # xaxis label
                 yaxis_title_text='Count', # yaxis label
             )
