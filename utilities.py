@@ -247,7 +247,7 @@ def make_calcode_correlation_plot(
 
     for board_id in board_ids:
         cal_dimensions += ["calibration_code_{}".format(board_id)]
-        cal_labels["calibration_code_{}".format(board_id)] = "Board {} Calibration code [ns]".format(board_id)
+        cal_labels["calibration_code_{}".format(board_id)] = "Board {} Calibration code".format(board_id)
 
     fig = px.scatter_matrix(
         data_df,
@@ -744,6 +744,20 @@ def build_plots(
     else:
         df = original_df
 
+    # Get list of all board ids
+    board_ids = sorted(df["data_board_id"].unique())
+    range_cal = [0, 1024]
+
+    # Copied pivot_df from build_time_plots
+    # Create the pivot table with a column for each board
+    pivot_df = df.pivot(
+        index = 'event',
+        columns = 'data_board_id',
+        values = list(set(df.columns) - {'data_board_id', 'event'}),
+    )
+    # Rename columns so they are no longer hierarchical
+    pivot_df.columns = ["{}_{}".format(x, y) for x, y in pivot_df.columns]
+
     fig = go.Figure()
     for board_id in sorted(df["data_board_id"].unique()):
         fig.add_trace(go.Histogram(
@@ -911,27 +925,11 @@ def build_plots(
     )
 
     # To creat cal code distributions scatter
-
-    # Get list of all board ids
-    board_ids = sorted(df["data_board_id"].unique())
-    range_cal = [0, 1024]
-
-    # Copied pivot_df from build_time_plots
-    # Create the pivot table with a column for each board
-    pivot_df = df.pivot(
-        index = 'event',
-        columns = 'data_board_id',
-        values = list(set(df.columns) - {'data_board_id', 'event'}),
-    )
-    # Rename columns so they are no longer hierarchical
-    pivot_df.columns = ["{}_{}".format(x, y) for x, y in pivot_df.columns]
-
     make_calcode_correlation_plots(
         data_df=pivot_df,
         base_path=base_path,
         run_name=run_name,
         board_ids=board_ids,
-        range_cal=range_cal,
         full_html=full_html,
         extra_title=extra_title,
     )
