@@ -525,22 +525,26 @@ def make_time_correlation_plot(
     board_ids: list[int],
     full_html:bool=False,
     extra_title: str = "",
+    do_toa: bool = True,
+    do_tot: bool = True,
     ):
     dimensions = []
     labels = {}
 
     # The two loops are separated so that the dimensions are in the order we choose, i.e. toa before tot
-    for board_id in board_ids:
-        dimension = "time_of_arrival_ns_{}".format(board_id)
-        label = "Board {} TOA [ns]".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
+    if do_toa:
+        for board_id in board_ids:
+            dimension = "time_of_arrival_ns_{}".format(board_id)
+            label = "Board {} TOA [ns]".format(board_id)
+            dimensions += [dimension]
+            labels[dimension] = label
 
-    for board_id in board_ids:
-        dimension = "time_over_threshold_ns_{}".format(board_id)
-        label = "Board {} TOT [ns]".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
+    if do_tot:
+        for board_id in board_ids:
+            dimension = "time_over_threshold_ns_{}".format(board_id)
+            label = "Board {} TOT [ns]".format(board_id)
+            dimensions += [dimension]
+            labels[dimension] = label
 
     fig = px.scatter_matrix(
         data_df,
