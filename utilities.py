@@ -34,7 +34,7 @@ def make_multi_scatter_plot(
         }
         dimensions = ["time_of_arrival", "time_over_threshold", "calibration_code"]
     else:
-        labels = {}
+        labels = {"data_board_id_cat": "Board ID"}
         dimensions = []
     labels.update(additional_labels)
 
