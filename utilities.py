@@ -527,6 +527,8 @@ def make_time_correlation_plot(
     extra_title: str = "",
     do_toa: bool = True,
     do_tot: bool = True,
+    additional_dimensions: list[str] = [],
+    additional_labels: dict[str] = {},
     ):
     dimensions = []
     labels = {}
@@ -538,6 +540,7 @@ def make_time_correlation_plot(
             label = "Board {} TOA [ns]".format(board_id)
             dimensions += [dimension]
             labels[dimension] = label
+    labels.update(additional_labels)
 
     if do_tot:
         for board_id in board_ids:
@@ -548,7 +551,7 @@ def make_time_correlation_plot(
 
     fig = px.scatter_matrix(
         data_df,
-        dimensions=dimensions + dimensions,
+        dimensions=dimensions + additional_dimensions,
         labels = labels,
         title = "Scatter plot correlating time variables between boards<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
         opacity = 0.2,
