@@ -13,6 +13,28 @@ from utilities import plot_etroc1_task
 from utilities import build_plots
 from utilities import apply_event_filter
 
+
+def apply_numeric_comparison_to_column(
+    column: pandas.Series,
+    cut_direction: str,
+    value: str,
+    callee_info: str,
+    ):
+    if cut_direction == "<":
+        return (column < value)
+    elif cut_direction == "<=":
+        return (column <= value)
+    elif cut_direction == ">":
+        return (column > value)
+    elif cut_direction == ">=":
+        return (column >= value)
+    elif cut_direction == "==":
+        return (column == value)
+    elif cut_direction == "<>":
+        return (column != value)
+    else:
+        raise RuntimeError("Unknown cut direction for {}: {}".format(callee_info, cut_direction))
+
 def data_df_apply_single_cut(
     data_df: pandas.DataFrame,
     board_id:int,
@@ -26,20 +48,7 @@ def data_df_apply_single_cut(
     else:
         extra_rows_to_keep = False
 
-    if cut_type == '<':
-        return ((data_df[(variable, board_id)] < cut_value) | extra_rows_to_keep)
-    elif cut_type == '<=':
-        return ((data_df[(variable, board_id)] <= cut_value) | extra_rows_to_keep)
-    elif cut_type == '>':
-        return ((data_df[(variable, board_id)] > cut_value) | extra_rows_to_keep)
-    elif cut_type == '>=':
-        return ((data_df[(variable, board_id)] >= cut_value) | extra_rows_to_keep)
-    elif cut_type == '==':
-        return ((data_df[(variable, board_id)] == cut_value) | extra_rows_to_keep)
-    elif cut_type == '<>':
-        return ((data_df[(variable, board_id)] != cut_value) | extra_rows_to_keep)
-    else:
-        raise ValueError('Received a cut of type `cut_type: {}`, dont know that that is...'.format(cut_type))
+    return (apply_numeric_comparison_to_column(data_df[(variable, board_id)], cut_type, cut_value, "single cut") | extra_rows_to_keep)
 
 def df_apply_cut(
     df: pandas.DataFrame,
