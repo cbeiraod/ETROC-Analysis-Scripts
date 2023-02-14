@@ -6,6 +6,7 @@ import lip_pps_run_manager as RM
 import logging
 import pandas
 import numpy
+import sympy
 import sqlite3
 
 import plotly.express as px
@@ -598,12 +599,18 @@ def make_board_scatter_with_fit_plot(
     make_hist: bool = True,
     full_html: bool = False,
     extra_title: str = "",
+    rounding_digits: int = 3,
+    annotation_distance: float = 10,
     ):
     accepted = data_df[("accepted", board_id)]
     x_column = data_df.loc[accepted][(x_axis_col, board_id)].astype(float)
     y_column = data_df.loc[accepted][(y_axis_col, board_id)].astype(float)
     min_x = x_column.min()
     max_x = x_column.max()
+
+    if poly is not None:
+        poly_expr = sympy.Poly(reversed(poly.coef.round(rounding_digits)), sympy.symbols('x')).as_expr()
+        poly_eq = sympy.printing.latex(poly_expr)
 
     fig = go.Figure()
     fig.add_trace(
@@ -627,6 +634,23 @@ def make_board_scatter_with_fit_plot(
                 name = "Fit"
             )
         )
+        fig.add_annotation(
+            text="${}$".format(poly_eq),
+            #xref="paper",
+            #yref="paper",
+            x=poly_x[-5],
+            y=poly_y[-5],
+            ax=-5*abs(annotation_distance),
+            ay=-8*annotation_distance,
+            showarrow=True,
+            font=dict(
+                family="Courier New, monospace",
+                size=16,
+                color="#ff0000"
+            ),
+            arrowcolor='#ff0000',
+            align="right",
+        )
     fig.update_layout(
         title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
         xaxis_title_text=x_axis_label, # xaxis label
@@ -636,6 +660,7 @@ def make_board_scatter_with_fit_plot(
         base_path/'Board{}_{}.html'.format(board_id, file_name),
         full_html = full_html,
         include_plotlyjs = 'cdn',
+        include_mathjax = 'cdn',
     )
 
     if make_hist:
@@ -662,6 +687,23 @@ def make_board_scatter_with_fit_plot(
                     name = "Fit"
                 )
             )
+            fig.add_annotation(
+                text="${}$".format(poly_eq),
+                #xref="paper",
+                #yref="paper",
+                x=poly_x[-5],
+                y=poly_y[-5],
+                ax=-5*abs(annotation_distance),
+                ay=-8*annotation_distance,
+                showarrow=True,
+                font=dict(
+                    family="Courier New, monospace",
+                    size=16,
+                    color="#ff0000"
+                ),
+                arrowcolor='#ff0000',
+                align="right",
+            )
         fig.update_layout(
             title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
             xaxis_title_text=x_axis_label, # xaxis label
@@ -671,6 +713,7 @@ def make_board_scatter_with_fit_plot(
             base_path/'Board{}_{}_Heatmap.html'.format(board_id, file_name),
             full_html = full_html,
             include_plotlyjs = 'cdn',
+            include_mathjax = 'cdn',
         )
 
 def build_plots(
