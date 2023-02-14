@@ -5,6 +5,7 @@ import lip_pps_run_manager as RM
 
 import logging
 import pandas
+import numpy
 import sqlite3
 
 import plotly.express as px
@@ -581,6 +582,96 @@ def make_time_correlation_plot(
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
+
+def make_board_scatter_with_fit_plot(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_id: int,
+    x_axis_col: str,
+    y_axis_col: str,
+    x_axis_label: str,
+    y_axis_label: str,
+    title: str,
+    file_name: str,
+    poly: numpy.poly1d = None,
+    make_hist: bool = True,
+    full_html: bool = False,
+    extra_title: str = "",
+    ):
+    accepted = data_df[("accepted", board_id)]
+    x_column = data_df.loc[accepted][(x_axis_col, board_id)].astype(float)
+    y_column = data_df.loc[accepted][(y_axis_col, board_id)].astype(float)
+    min_x = x_column.min()
+    max_x = x_column.max()
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x = x_column,
+            y = y_column,
+            mode = "markers",
+            name = "Data",
+        )
+    )
+    if poly is not None:
+        range_x = max_x - min_x
+        extra_x = range_x * 0.1
+        poly_x = numpy.linspace(min_x - extra_x, max_x + extra_x)
+        poly_y = poly(poly_x)
+        fig.add_trace(
+            go.Scatter(
+                x = poly_x,
+                y = poly_y,
+                mode = "lines",
+                name = "Fit"
+            )
+        )
+    fig.update_layout(
+        title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
+        xaxis_title_text=x_axis_label, # xaxis label
+        yaxis_title_text=y_axis_label, # yaxis label
+    )
+    fig.write_html(
+        base_path/'Board{}_{}.html'.format(board_id, file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+    if make_hist:
+        fig = px.density_heatmap(
+            x=x_column,
+            y=y_column,
+            #color_continuous_scale=[
+            #    [0, colorscale[0]],
+            #    [1./1000000, colorscale[2]],
+            #    [1./10000, colorscale[4]],
+            #    [1./100, colorscale[7]],
+            #    [1., colorscale[8]],
+            #],
+            color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        )
+        if poly is not None:
+            poly_x = numpy.linspace(min_x, max_x)
+            poly_y = poly(poly_x)
+            fig.add_trace(
+                go.Scatter(
+                    x = poly_x,
+                    y = poly_y,
+                    mode = "lines",
+                    name = "Fit"
+                )
+            )
+        fig.update_layout(
+            title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
+            xaxis_title_text=x_axis_label, # xaxis label
+            yaxis_title_text=y_axis_label, # yaxis label
+        )
+        fig.write_html(
+            base_path/'Board{}_{}_Heatmap.html'.format(board_id, file_name),
+            full_html = full_html,
+            include_plotlyjs = 'cdn',
+        )
 
 def build_plots(
     original_df: pandas.DataFrame,
