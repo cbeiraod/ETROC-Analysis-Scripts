@@ -5,6 +5,8 @@ import lip_pps_run_manager as RM
 
 import logging
 import pandas
+import numpy
+import sympy
 import sqlite3
 
 import plotly.express as px
@@ -23,18 +25,24 @@ def make_multi_scatter_plot(
     extra_title: str = "",
     additional_dimensions: list[str] = [],
     additional_labels: dict[str] = {},
+    use_base_dimensions: bool = True,
     ):
-    labels = {
-        "time_over_threshold": "Time over Threshold",
-        "time_of_arrival": "Time of Arrival",
-        "calibration_code": "Calibration Code",
-        "data_board_id_cat": "Board ID"
-    }
+    if use_base_dimensions:
+        labels = {
+            "time_over_threshold": "Time over Threshold",
+            "time_of_arrival": "Time of Arrival",
+            "calibration_code": "Calibration Code",
+            "data_board_id_cat": "Board ID"
+        }
+        dimensions = ["time_of_arrival", "time_over_threshold", "calibration_code"]
+    else:
+        labels = {"data_board_id_cat": "Board ID"}
+        dimensions = []
     labels.update(additional_labels)
 
     fig = px.scatter_matrix(
         data_df,
-        dimensions=sorted(["time_of_arrival", "time_over_threshold", "calibration_code"] + additional_dimensions),
+        dimensions=sorted(dimensions + additional_dimensions),
         labels = labels,
         color=color_column,
         title = "Scatter plot comparing variables for each board<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
@@ -678,26 +686,33 @@ def make_time_correlation_plot(
     board_ids: list[int],
     full_html:bool=False,
     extra_title: str = "",
+    do_toa: bool = True,
+    do_tot: bool = True,
+    additional_dimensions: list[str] = [],
+    additional_labels: dict[str] = {},
     ):
     dimensions = []
     labels = {}
 
     # The two loops are separated so that the dimensions are in the order we choose, i.e. toa before tot
-    for board_id in board_ids:
-        dimension = "time_of_arrival_ns_{}".format(board_id)
-        label = "Board {} TOA [ns]".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
+    if do_toa:
+        for board_id in board_ids:
+            dimension = "time_of_arrival_ns_{}".format(board_id)
+            label = "Board {} TOA [ns]".format(board_id)
+            dimensions += [dimension]
+            labels[dimension] = label
+    labels.update(additional_labels)
 
-    for board_id in board_ids:
-        dimension = "time_over_threshold_ns_{}".format(board_id)
-        label = "Board {} TOT [ns]".format(board_id)
-        dimensions += [dimension]
-        labels[dimension] = label
+    if do_tot:
+        for board_id in board_ids:
+            dimension = "time_over_threshold_ns_{}".format(board_id)
+            label = "Board {} TOT [ns]".format(board_id)
+            dimensions += [dimension]
+            labels[dimension] = label
 
     fig = px.scatter_matrix(
         data_df,
-        dimensions=dimensions + dimensions,
+        dimensions=dimensions + additional_dimensions,
         labels = labels,
         title = "Scatter plot correlating time variables between boards<br><sup>Run: {}{}</sup>".format(run_name, extra_title),
         opacity = 0.2,
@@ -727,6 +742,138 @@ def make_time_correlation_plot(
         full_html = full_html,
         include_plotlyjs = 'cdn',
     )
+
+def make_board_scatter_with_fit_plot(
+    data_df: pandas.DataFrame,
+    base_path: Path,
+    run_name: str,
+    board_id: int,
+    x_axis_col: str,
+    y_axis_col: str,
+    x_axis_label: str,
+    y_axis_label: str,
+    title: str,
+    file_name: str,
+    poly: numpy.poly1d = None,
+    make_hist: bool = True,
+    full_html: bool = False,
+    extra_title: str = "",
+    rounding_digits: int = 3,
+    annotation_distance: float = 10,
+    ):
+    accepted = data_df[("accepted", board_id)]
+    x_column = data_df.loc[accepted][(x_axis_col, board_id)].astype(float)
+    y_column = data_df.loc[accepted][(y_axis_col, board_id)].astype(float)
+    min_x = x_column.min()
+    max_x = x_column.max()
+
+    if poly is not None:
+        poly_expr = sympy.Poly(reversed(poly.coef.round(rounding_digits)), sympy.symbols('x')).as_expr()
+        poly_eq = sympy.printing.latex(poly_expr)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x = x_column,
+            y = y_column,
+            mode = "markers",
+            name = "Data",
+        )
+    )
+    if poly is not None:
+        range_x = max_x - min_x
+        extra_x = range_x * 0.1
+        poly_x = numpy.linspace(min_x - extra_x, max_x + extra_x)
+        poly_y = poly(poly_x)
+        fig.add_trace(
+            go.Scatter(
+                x = poly_x,
+                y = poly_y,
+                mode = "lines",
+                name = "Fit"
+            )
+        )
+        fig.add_annotation(
+            text="${}$".format(poly_eq),
+            #xref="paper",
+            #yref="paper",
+            x=poly_x[-5],
+            y=poly_y[-5],
+            ax=-5*abs(annotation_distance),
+            ay=-8*annotation_distance,
+            showarrow=True,
+            font=dict(
+                family="Courier New, monospace",
+                size=16,
+                color="#ff0000"
+            ),
+            arrowcolor='#ff0000',
+            align="right",
+        )
+    fig.update_layout(
+        title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
+        xaxis_title_text=x_axis_label, # xaxis label
+        yaxis_title_text=y_axis_label, # yaxis label
+    )
+    fig.write_html(
+        base_path/'Board{}_{}.html'.format(board_id, file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+        include_mathjax = 'cdn',
+    )
+
+    if make_hist:
+        fig = px.density_heatmap(
+            x=x_column,
+            y=y_column,
+            #color_continuous_scale=[
+            #    [0, colorscale[0]],
+            #    [1./1000000, colorscale[2]],
+            #    [1./10000, colorscale[4]],
+            #    [1./100, colorscale[7]],
+            #    [1., colorscale[8]],
+            #],
+            color_continuous_scale="Blues",  # https://plotly.com/python/builtin-colorscales/
+        )
+        if poly is not None:
+            poly_x = numpy.linspace(min_x, max_x)
+            poly_y = poly(poly_x)
+            fig.add_trace(
+                go.Scatter(
+                    x = poly_x,
+                    y = poly_y,
+                    mode = "lines",
+                    name = "Fit"
+                )
+            )
+            fig.add_annotation(
+                text="${}$".format(poly_eq),
+                #xref="paper",
+                #yref="paper",
+                x=poly_x[-5],
+                y=poly_y[-5],
+                ax=-5*abs(annotation_distance),
+                ay=-8*annotation_distance,
+                showarrow=True,
+                font=dict(
+                    family="Courier New, monospace",
+                    size=16,
+                    color="#ff0000"
+                ),
+                arrowcolor='#ff0000',
+                align="right",
+            )
+        fig.update_layout(
+            title_text="Board {} {}<br><sup>Run: {}{}</sup>".format(board_id, title, run_name, extra_title),
+            xaxis_title_text=x_axis_label, # xaxis label
+            yaxis_title_text=y_axis_label, # yaxis label
+        )
+        fig.write_html(
+            base_path/'Board{}_{}_Heatmap.html'.format(board_id, file_name),
+            full_html = full_html,
+            include_plotlyjs = 'cdn',
+            include_mathjax = 'cdn',
+        )
 
 def build_plots(
     original_df: pandas.DataFrame,

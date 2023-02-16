@@ -22,6 +22,7 @@ python -m pip install plotly
 python -m pip install pandas
 python -m pip install pyarrow
 python -m pip install statsmodels
+python -m pip install sympy
 ```
 
 ## How to use
