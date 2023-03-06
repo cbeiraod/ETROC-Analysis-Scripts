@@ -295,30 +295,6 @@ def script_main(
 
         calculate_time_walk_correction_task(Homer, script_logger=script_logger, iterations=iterations, poly_order=poly_order)
 
-#        plot_times_in_ns_task(
-#            Fermat,
-#            script_logger=script_logger,
-#            task_name="plot_times_in_ns_before_cuts",
-#            data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
-#            filter_files={},
-#            max_toa=max_toa,
-#            max_tot=max_tot,
-#            min_toa=0,
-#            min_tot=0,
-#        )
-#
-#        plot_times_in_ns_task(
-#            Fermat,
-#            script_logger=script_logger,
-#            task_name="plot_times_in_ns_after_cuts",
-#            data_file=Fermat.get_task_path("calculate_times_in_ns")/'data.sqlite',
-#            filter_files={"event": Fermat.path_directory/"event_filter.fd"},
-#            max_toa=max_toa,
-#            max_tot=max_tot,
-#            min_toa=0,
-#            min_tot=0,
-#        )
-
 if __name__ == '__main__':
     import argparse
 
