@@ -125,7 +125,7 @@ def fit_and_plot_twc(
                 y_axis_col = delta_twc_column,
                 x_axis_label = 'Time over Threshold [ns]',
                 y_axis_label = 'ΔT TWC [ns]',
-                title = "Time Walk Correction - Iteration {}".format(iteration),
+                title = "Time Walk Correction - Iteration {}".format(iteration - 1),
                 file_name = "TWC_After_Correction",
                 poly = poly,
                 full_html = full_html,
@@ -274,53 +274,6 @@ def calculate_time_walk_correction_task(
                                index=False,
                                if_exists='replace')
                 full_fit_df.to_sql('twc_fit_info',
-                               output_sqlite3_connection,
-                               index=False,
-                               if_exists='replace')
-
-                return
-
-                filter_df = pandas.read_feather(Einstein.path_directory/"event_filter.fd")
-                filter_df.set_index("event", inplace=True)
-
-                from cut_etroc1_single_run import apply_event_filter
-                data_df = apply_event_filter(data_df, filter_df)
-                accepted_data_df = data_df.loc[data_df['accepted']==True]
-                board_grouped_accepted_data_df = accepted_data_df.groupby(['data_board_id'])
-
-                board_info_df = board_grouped_accepted_data_df[['calibration_code']].mean()
-                board_info_df.rename(columns = {'calibration_code':'calibration_code_mean'}, inplace = True)
-                board_info_df['calibration_code_median'] = board_grouped_accepted_data_df[['calibration_code']].median()
-                board_info_df['fbin_mean'] = 3.125/board_info_df['calibration_code_mean']
-                board_info_df['fbin_median'] = 3.125/board_info_df['calibration_code_median']
-
-                #accepted_data_df.set_index("data_board_id", inplace=True)
-                #accepted_data_df["fbin"] = board_info_df['fbin_mean']
-                #accepted_data_df.reset_index(inplace=True)
-
-                #accepted_data_df["time_of_arrival_ns"] = 12.5 - accepted_data_df['time_of_arrival']*accepted_data_df['fbin']
-                #accepted_data_df["time_over_threshold_ns"] = (accepted_data_df["time_over_threshold"]*2 - (accepted_data_df["time_over_threshold"]/32.).apply(numpy.floor))*accepted_data_df['fbin']
-
-                data_df.set_index("data_board_id", inplace=True)
-                if fbin_choice == "mean":
-                    data_df["fbin"] = board_info_df['fbin_mean']
-                elif fbin_choice == "median":
-                    data_df["fbin"] = board_info_df['fbin_median']
-                elif fbin_choice == "event":
-                    data_df["fbin"] = 3.125/data_df['calibration_code']
-                data_df.reset_index(inplace=True)
-
-                data_df["time_of_arrival_ns"] = 12.5 - data_df['time_of_arrival']*data_df['fbin']
-                data_df["time_over_threshold_ns"] = (data_df["time_over_threshold"]*2 - (data_df["time_over_threshold"]/32.).apply(numpy.floor))*data_df['fbin']
-
-                board_info_df.to_sql('board_info_data',
-                                     output_sqlite3_connection,
-                                     #index=False,
-                                     if_exists='replace')
-
-                data_df.drop(labels=['accepted', 'event_filter'], axis=1, inplace=True)
-
-                data_df.to_sql('etroc1_data',
                                output_sqlite3_connection,
                                index=False,
                                if_exists='replace')
