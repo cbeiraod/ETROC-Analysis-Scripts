@@ -283,6 +283,15 @@ if __name__ == '__main__':
         type = int,
     )
     parser.add_argument(
+        '-w',
+        '--hit_window',
+        metavar = 'int',
+        help = 'Half-size of the window on the hit value for the edge detect algorithm. Default: 150',
+        default = 150,
+        dest = 'edge_detect_hit_window',
+        type = int,
+    )
+    parser.add_argument(
         '--trigger_board',
         metavar = 'int',
         help = 'The board used to trigger the system, only used if the edge_detect_hit_center_trigger_board is set. Default: no default value',
@@ -292,17 +301,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--trigger_board_hit_center',
         metavar = 'int',
-        help = 'Center of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the edge_detect_hit_center is used instead. Default: no default value',
+        help = 'Center of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the hit_center is used instead. Default: no default value',
         dest = 'edge_detect_hit_center_trigger_board',
         type = int,
     )
     parser.add_argument(
-        '-w',
-        '--hit_window',
+        '--trigger_board_hit_window',
         metavar = 'int',
-        help = 'Half-size of the window on the hit value for the edge detect algorithm. Default: 150',
-        default = 150,
-        dest = 'edge_detect_hit_window',
+        help = 'Half-size of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the hit_window is used instead. Default: no default value',
+        dest = 'edge_detect_hit_window_trigger_board',
         type = int,
     )
     parser.add_argument(
@@ -336,9 +343,14 @@ if __name__ == '__main__':
     trigger_board = None
     if hasattr(args, 'trigger_board'):
         trigger_board = args.trigger_board
+
     edge_detect_hit_center_trigger_board = None
     if hasattr(args, 'edge_detect_hit_center_trigger_board'):
         edge_detect_hit_center_trigger_board = args.edge_detect_hit_center_trigger_board
+
+    edge_detect_hit_window_trigger_board = None
+    if hasattr(args, 'edge_detect_hit_window_trigger_board'):
+        edge_detect_hit_window_trigger_board = args.edge_detect_hit_window_trigger_board
 
     script_main(
         Path(args.out_directory),
