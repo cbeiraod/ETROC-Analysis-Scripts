@@ -30,6 +30,7 @@ def calculate_dac_points_task(
             with sqlite3.connect(Artemis.get_task_path("merge_etroc1_runs")/'data.sqlite') as input_sqlite3_connection, \
                  sqlite3.connect(Artemis.task_path/'data.sqlite') as output_sqlite3_connection:
                 data_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', input_sqlite3_connection, index_col=None)
+                board_list = sorted(data_df['data_board_id'].unique())
 
                 hit_df = data_df.query("hits>0")
                 grouped_hit_df = hit_df.groupby(["data_board_id", "board_injected_charge"])
