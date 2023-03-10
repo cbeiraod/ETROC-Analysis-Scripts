@@ -21,12 +21,16 @@ def calculate_dac_points_task(
     edge_detect_hit_center:int=4450,
     edge_detect_hit_window:int=150,
     noise_edge_offset:int=4,
+    trigger_board:int=None,
+    trigger_board_edge_detect_hit_center:int=None,
+    trigger_board_edge_detect_hit_window:int=None,
     ):
     if Oberon.task_completed("merge_etroc1_runs"):
         with Oberon.handle_task("calculate_dac_points", drop_old_data=drop_old_data) as Artemis:
             with sqlite3.connect(Artemis.get_task_path("merge_etroc1_runs")/'data.sqlite') as input_sqlite3_connection, \
                  sqlite3.connect(Artemis.task_path/'data.sqlite') as output_sqlite3_connection:
                 data_df = pandas.read_sql('SELECT * FROM combined_etroc1_data', input_sqlite3_connection, index_col=None)
+                board_list = sorted(data_df['data_board_id'].unique())
 
                 hit_df = data_df.query("hits>0")
                 grouped_hit_df = hit_df.groupby(["data_board_id", "board_injected_charge"])
@@ -53,13 +57,38 @@ def calculate_dac_points_task(
                 sorted_data_df["hit_mean"] = grouped_sorted_data_df.rolling(rolling_mean, center=True)[["hits"]].mean().reset_index().set_index("level_2")["hits"]
                 # Calculate difference of hits to the previously computed mean
                 sorted_data_df["hit_mean_diff"] = sorted_data_df["hit_mean"] - sorted_data_df["hits"]
-                # Calculate difference between sequetial rows
+                # Calculate difference between sequential rows
                 sorted_data_df["hit_diff"] = grouped_sorted_data_df['hits'].diff()
                 #print(grouped_sorted_data_df.get_group(print_group))
                 #print(grouped_sorted_data_df.get_group(print_group)[["board_discriminator_threshold", "hits", "hit_diff", "hit_mean", "hit_mean_diff", "noise_limit"]].to_string())
 
+                # Calculate the centers for each board, for the edge detect algorithm
+                center_df = pandas.DataFrame()
+                center_df.index = board_list
+                center_df.index.name='data_board_id'
+                center_df["center"] = edge_detect_hit_center
+
+                # Calculate the windows for each board, for the edge detect algorithm
+                window_df = pandas.DataFrame()
+                window_df.index = board_list
+                window_df.index.name='data_board_id'
+                window_df["window"] = edge_detect_hit_window
+
+                if trigger_board is not None and trigger_board in board_list:
+                    if trigger_board_edge_detect_hit_center is not None:
+                        center_df.at[trigger_board, "center"] = trigger_board_edge_detect_hit_center
+
+                    if trigger_board_edge_detect_hit_window is not None:
+                        window_df.at[trigger_board, "window"] = trigger_board_edge_detect_hit_window
+
+
+                sorted_data_df.set_index('data_board_id', inplace=True)
+                sorted_data_df['center'] = center_df
+                sorted_data_df['window'] = window_df
+                sorted_data_df.reset_index(inplace=True)
+
                 # Run the edge detect algorithm and keep only data which triggers the edge detection
-                sorted_data_df["edge_detect"] = (sorted_data_df["hit_mean_diff"].abs() < edge_detect_difference_from_mean) * ((sorted_data_df['hits'] - edge_detect_hit_center).abs() < edge_detect_hit_window)
+                sorted_data_df["edge_detect"] = (sorted_data_df["hit_mean_diff"].abs() < edge_detect_difference_from_mean) * ((sorted_data_df['hits'] - sorted_data_df['center']).abs() < sorted_data_df['window'])
                 filtered_edge_df = sorted_data_df.loc[sorted_data_df["edge_detect"]]
                 grouped_filtered_edge_df = filtered_edge_df.groupby(["data_board_id", "board_injected_charge"])
                 #print(grouped_filtered_edge_df.get_group(print_group))
@@ -191,6 +220,9 @@ def script_main(
     edge_detect_hit_center:int=4450,
     edge_detect_hit_window:int=150,
     noise_edge_offset:int=4,
+    trigger_board:int=None,
+    trigger_board_edge_detect_hit_center:int=None,
+    trigger_board_edge_detect_hit_window:int=None,
     ):
 
     script_logger = logging.getLogger('dac_vs_charge')
@@ -212,6 +244,9 @@ def script_main(
             edge_detect_hit_center=edge_detect_hit_center,
             edge_detect_hit_window=edge_detect_hit_window,
             noise_edge_offset=noise_edge_offset,
+            trigger_board=trigger_board,
+            trigger_board_edge_detect_hit_center=trigger_board_edge_detect_hit_center,
+            trigger_board_edge_detect_hit_window=trigger_board_edge_detect_hit_window,
         )
 
         plot_dac_vs_charge_task(
@@ -292,6 +327,27 @@ if __name__ == '__main__':
         type = int,
     )
     parser.add_argument(
+        '--trigger_board',
+        metavar = 'int',
+        help = 'The board used to trigger the system, only used if the edge_detect_hit_center_trigger_board is set. Default: no default value',
+        dest = 'trigger_board',
+        type = int,
+    )
+    parser.add_argument(
+        '--trigger_board_hit_center',
+        metavar = 'int',
+        help = 'Center of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the hit_center is used instead. Default: no default value',
+        dest = 'edge_detect_hit_center_trigger_board',
+        type = int,
+    )
+    parser.add_argument(
+        '--trigger_board_hit_window',
+        metavar = 'int',
+        help = 'Half-size of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the hit_window is used instead. Default: no default value',
+        dest = 'edge_detect_hit_window_trigger_board',
+        type = int,
+    )
+    parser.add_argument(
         '-f',
         '--noise_edge_offset',
         metavar = 'int',
@@ -319,6 +375,18 @@ if __name__ == '__main__':
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
 
+    trigger_board = None
+    if hasattr(args, 'trigger_board'):
+        trigger_board = args.trigger_board
+
+    edge_detect_hit_center_trigger_board = None
+    if hasattr(args, 'edge_detect_hit_center_trigger_board'):
+        edge_detect_hit_center_trigger_board = args.edge_detect_hit_center_trigger_board
+
+    edge_detect_hit_window_trigger_board = None
+    if hasattr(args, 'edge_detect_hit_window_trigger_board'):
+        edge_detect_hit_window_trigger_board = args.edge_detect_hit_window_trigger_board
+
     script_main(
         Path(args.out_directory),
         noise_with_charge=args.noise_with_charge,
@@ -327,4 +395,7 @@ if __name__ == '__main__':
         edge_detect_hit_center=args.edge_detect_hit_center,
         edge_detect_hit_window=args.edge_detect_hit_window,
         noise_edge_offset=args.noise_edge_offset,
+        trigger_board=trigger_board,
+        trigger_board_edge_detect_hit_center=edge_detect_hit_center_trigger_board,
+        trigger_board_edge_detect_hit_window=edge_detect_hit_window_trigger_board,
     )
