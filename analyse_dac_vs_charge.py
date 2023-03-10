@@ -62,8 +62,33 @@ def calculate_dac_points_task(
                 #print(grouped_sorted_data_df.get_group(print_group))
                 #print(grouped_sorted_data_df.get_group(print_group)[["board_discriminator_threshold", "hits", "hit_diff", "hit_mean", "hit_mean_diff", "noise_limit"]].to_string())
 
+                # Calculate the centers for each board, for the edge detect algorithm
+                center_df = pandas.DataFrame()
+                center_df.index = board_list
+                center_df.index.name='data_board_id'
+                center_df["center"] = edge_detect_hit_center
+
+                # Calculate the windows for each board, for the edge detect algorithm
+                window_df = pandas.DataFrame()
+                window_df.index = board_list
+                window_df.index.name='data_board_id'
+                window_df["window"] = edge_detect_hit_window
+
+                if trigger_board is not None and trigger_board in board_list:
+                    if trigger_board_edge_detect_hit_center is not None:
+                        center_df.at[trigger_board, "center"] = trigger_board_edge_detect_hit_center
+
+                    if trigger_board_edge_detect_hit_window is not None:
+                        window_df.at[trigger_board, "window"] = trigger_board_edge_detect_hit_window
+
+
+                sorted_data_df.set_index('data_board_id', inplace=True)
+                sorted_data_df['center'] = center_df
+                sorted_data_df['window'] = window_df
+                sorted_data_df.reset_index(inplace=True)
+
                 # Run the edge detect algorithm and keep only data which triggers the edge detection
-                sorted_data_df["edge_detect"] = (sorted_data_df["hit_mean_diff"].abs() < edge_detect_difference_from_mean) * ((sorted_data_df['hits'] - edge_detect_hit_center).abs() < edge_detect_hit_window)
+                sorted_data_df["edge_detect"] = (sorted_data_df["hit_mean_diff"].abs() < edge_detect_difference_from_mean) * ((sorted_data_df['hits'] - sorted_data_df['center']).abs() < sorted_data_df['window'])
                 filtered_edge_df = sorted_data_df.loc[sorted_data_df["edge_detect"]]
                 grouped_filtered_edge_df = filtered_edge_df.groupby(["data_board_id", "board_injected_charge"])
                 #print(grouped_filtered_edge_df.get_group(print_group))
