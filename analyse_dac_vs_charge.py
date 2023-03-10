@@ -158,9 +158,6 @@ def plot_dac_vs_charge_task(
                     beta = model.iloc[0]["px_fit_results"].params[1]
                     rsq = model.iloc[0]["px_fit_results"].rsquared
 
-                    min_charge = (float(noise_edges["noise_max_dac"]) - alpha)/beta
-                    extra_charge = min(5,floor(min_charge))
-
                     fig.data[0].name = 'measurements'
                     fig.data[0].showlegend = True
                     fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
@@ -168,43 +165,49 @@ def plot_dac_vs_charge_task(
                     fig.data[1].line.color = 'green'
                     fig.data[1].line.dash = 'dash'
 
-                    # Add extra points to the fit so it extends to the noise region
-                    fig.data[1].y = numpy.insert(fig.data[1].y, 0, noise_edges["noise_max_dac"], axis=0)
-                    fig.data[1].x = numpy.insert(fig.data[1].x, 0, min_charge, axis=0)
-                    fig.data[1].y = numpy.insert(fig.data[1].y, 0, extra_charge*beta + alpha, axis=0)
-                    fig.data[1].x = numpy.insert(fig.data[1].x, 0, extra_charge, axis=0)
+                    if noise_edges["noise_max_dac"] is not None and noise_edges["noise_min_dac"] is not None and not numpy.isnan(noise_edges["noise_max_dac"]) and not numpy.isnan(noise_edges["noise_min_dac"]):
+                        min_charge = (float(noise_edges["noise_max_dac"]) - alpha)/beta
+                        extra_charge = min(5,floor(min_charge))
 
-                    min_charge = ceil(min_charge)
+                        # Add extra points to the fit so it extends to the noise region
+                        fig.data[1].y = numpy.insert(fig.data[1].y, 0, noise_edges["noise_max_dac"], axis=0)
+                        fig.data[1].x = numpy.insert(fig.data[1].x, 0, min_charge, axis=0)
+                        fig.data[1].y = numpy.insert(fig.data[1].y, 0, extra_charge*beta + alpha, axis=0)
+                        fig.data[1].x = numpy.insert(fig.data[1].x, 0, extra_charge, axis=0)
 
-                    fig.add_hrect(
-                        y0=noise_edges["noise_min_dac"],
-                        y1=noise_edges["noise_max_dac"],
-                        line_width=0,
-                        fillcolor="red",
-                        opacity=0.2,
-                        annotation_text="Noise: {}-{}".format(floor(noise_edges["noise_min_dac"]), ceil(noise_edges["noise_max_dac"])),
-                        annotation_position="top right",
-                        annotation_font_size=20,
-                    )
+                        min_charge = ceil(min_charge)
 
-                    threshold_str = ""
-                    charges = [min_charge + i for i in range(3)]
-                    for charge in charges:
-                        threshold_str += "<br>{} fC: {}".format(charge, ceil(alpha + beta*charge))
+                        fig.add_hrect(
+                            y0=noise_edges["noise_min_dac"],
+                            y1=noise_edges["noise_max_dac"],
+                            line_width=0,
+                            fillcolor="red",
+                            opacity=0.2,
+                            annotation_text="Noise: {}-{}".format(floor(noise_edges["noise_min_dac"]), ceil(noise_edges["noise_max_dac"])),
+                            annotation_position="top right",
+                            annotation_font_size=20,
+                        )
 
-                    fig.add_annotation(
-                        text="Suggested thresholds:{}".format(threshold_str),
-                        xref="paper",
-                        yref="paper",
-                        x=0.02,
-                        y=0.8,
-                        showarrow=False,
-                        font=dict(
-                            #family="Courier New, monospace",
-                            size=16,
-                            #color="#ffffff"
-                        ),
-                    )
+                        threshold_str = ""
+                        charges = [min_charge + i for i in range(3)]
+                        for charge in charges:
+                            threshold_str += "<br>{} fC: {}".format(charge, ceil(alpha + beta*charge))
+
+                        fig.add_annotation(
+                            text="Suggested thresholds:{}".format(threshold_str),
+                            xref="paper",
+                            yref="paper",
+                            x=0.02,
+                            y=0.8,
+                            showarrow=False,
+                            font=dict(
+                                #family="Courier New, monospace",
+                                size=16,
+                                #color="#ffffff"
+                            ),
+                        )
+                    else:
+                        print("The min_charge or max_charge for board {} is not defined, so the output plot is not complete. This is probably because the parameters of the edge detect algorithm are not correctly set.".format(board_id))
 
                     fig.write_html(
                         Matisse.task_path/'Board{}_DAC_vs_Injected_Charge.html'.format(board_id),
