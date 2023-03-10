@@ -56,7 +56,7 @@ def calculate_dac_points_task(
                 sorted_data_df["hit_mean"] = grouped_sorted_data_df.rolling(rolling_mean, center=True)[["hits"]].mean().reset_index().set_index("level_2")["hits"]
                 # Calculate difference of hits to the previously computed mean
                 sorted_data_df["hit_mean_diff"] = sorted_data_df["hit_mean"] - sorted_data_df["hits"]
-                # Calculate difference between sequetial rows
+                # Calculate difference between sequential rows
                 sorted_data_df["hit_diff"] = grouped_sorted_data_df['hits'].diff()
                 #print(grouped_sorted_data_df.get_group(print_group))
                 #print(grouped_sorted_data_df.get_group(print_group)[["board_discriminator_threshold", "hits", "hit_diff", "hit_mean", "hit_mean_diff", "noise_limit"]].to_string())
