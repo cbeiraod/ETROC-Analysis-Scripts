@@ -21,6 +21,9 @@ def calculate_dac_points_task(
     edge_detect_hit_center:int=4450,
     edge_detect_hit_window:int=150,
     noise_edge_offset:int=4,
+    trigger_board:int=None,
+    trigger_board_edge_detect_hit_center:int=None,
+    trigger_board_edge_detect_hit_window:int=None,
     ):
     if Oberon.task_completed("merge_etroc1_runs"):
         with Oberon.handle_task("calculate_dac_points", drop_old_data=drop_old_data) as Artemis:
@@ -191,6 +194,9 @@ def script_main(
     edge_detect_hit_center:int=4450,
     edge_detect_hit_window:int=150,
     noise_edge_offset:int=4,
+    trigger_board:int=None,
+    trigger_board_edge_detect_hit_center:int=None,
+    trigger_board_edge_detect_hit_window:int=None,
     ):
 
     script_logger = logging.getLogger('dac_vs_charge')
@@ -212,6 +218,9 @@ def script_main(
             edge_detect_hit_center=edge_detect_hit_center,
             edge_detect_hit_window=edge_detect_hit_window,
             noise_edge_offset=noise_edge_offset,
+            trigger_board=trigger_board,
+            trigger_board_edge_detect_hit_center=trigger_board_edge_detect_hit_center,
+            trigger_board_edge_detect_hit_window=trigger_board_edge_detect_hit_window,
         )
 
         plot_dac_vs_charge_task(
@@ -360,4 +369,7 @@ if __name__ == '__main__':
         edge_detect_hit_center=args.edge_detect_hit_center,
         edge_detect_hit_window=args.edge_detect_hit_window,
         noise_edge_offset=args.noise_edge_offset,
+        trigger_board=trigger_board,
+        trigger_board_edge_detect_hit_center=edge_detect_hit_center_trigger_board,
+        trigger_board_edge_detect_hit_window=edge_detect_hit_window_trigger_board,
     )
