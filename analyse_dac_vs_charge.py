@@ -158,7 +158,7 @@ def plot_dac_vs_charge_task(
                     beta = model.iloc[0]["px_fit_results"].params[1]
                     rsq = model.iloc[0]["px_fit_results"].rsquared
 
-                    if noise_edges["noise_max_dac"] is not None and noise_edges["noise_min_dac"] is not None:
+                    if noise_edges["noise_max_dac"] is not None and noise_edges["noise_min_dac"] is not None and not numpy.isnan(noise_edges["noise_max_dac"]) and not numpy.isnan(noise_edges["noise_min_dac"]):
                         min_charge = (float(noise_edges["noise_max_dac"]) - alpha)/beta
                         extra_charge = min(5,floor(min_charge))
 
