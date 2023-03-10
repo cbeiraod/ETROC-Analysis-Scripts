@@ -283,6 +283,20 @@ if __name__ == '__main__':
         type = int,
     )
     parser.add_argument(
+        '--trigger_board',
+        metavar = 'int',
+        help = 'The board used to trigger the system, only used if the edge_detect_hit_center_trigger_board is set. Default: no default value',
+        dest = 'trigger_board',
+        type = int,
+    )
+    parser.add_argument(
+        '--trigger_board_hit_center',
+        metavar = 'int',
+        help = 'Center of the window on the hit value for the edge detect algorithm for the trigger board. Only used if the trigger board is defined. If this value is not defined, the edge_detect_hit_center is used instead. Default: no default value',
+        dest = 'edge_detect_hit_center_trigger_board',
+        type = int,
+    )
+    parser.add_argument(
         '-w',
         '--hit_window',
         metavar = 'int',
@@ -318,6 +332,13 @@ if __name__ == '__main__':
             logging.basicConfig(level=10)
         elif args.log_level == "NOTSET":
             logging.basicConfig(level=0)
+
+    trigger_board = None
+    if hasattr(args, 'trigger_board'):
+        trigger_board = args.trigger_board
+    edge_detect_hit_center_trigger_board = None
+    if hasattr(args, 'edge_detect_hit_center_trigger_board'):
+        edge_detect_hit_center_trigger_board = args.edge_detect_hit_center_trigger_board
 
     script_main(
         Path(args.out_directory),
