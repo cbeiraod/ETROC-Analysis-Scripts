@@ -158,16 +158,16 @@ def plot_dac_vs_charge_task(
                     beta = model.iloc[0]["px_fit_results"].params[1]
                     rsq = model.iloc[0]["px_fit_results"].rsquared
 
+                    fig.data[0].name = 'measurements'
+                    fig.data[0].showlegend = True
+                    fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
+                    fig.data[1].showlegend = True
+                    fig.data[1].line.color = 'green'
+                    fig.data[1].line.dash = 'dash'
+
                     if noise_edges["noise_max_dac"] is not None and noise_edges["noise_min_dac"] is not None and not numpy.isnan(noise_edges["noise_max_dac"]) and not numpy.isnan(noise_edges["noise_min_dac"]):
                         min_charge = (float(noise_edges["noise_max_dac"]) - alpha)/beta
                         extra_charge = min(5,floor(min_charge))
-
-                        fig.data[0].name = 'measurements'
-                        fig.data[0].showlegend = True
-                        fig.data[1].name = fig.data[1].name  + 'fit: y = ' + str(round(alpha, 2)) + ' + ' + str(round(beta, 2)) + 'x'
-                        fig.data[1].showlegend = True
-                        fig.data[1].line.color = 'green'
-                        fig.data[1].line.dash = 'dash'
 
                         # Add extra points to the fit so it extends to the noise region
                         fig.data[1].y = numpy.insert(fig.data[1].y, 0, noise_edges["noise_max_dac"], axis=0)
