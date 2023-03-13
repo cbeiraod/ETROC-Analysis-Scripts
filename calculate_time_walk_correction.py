@@ -269,11 +269,17 @@ def calculate_time_walk_correction_task(
 
                 original_df.reset_index(inplace=True)
 
+                twc_df = pandas.DataFrame([{'max_twc_iterations': iterations}], columns=['max_twc_iterations'])
+
                 original_df.to_sql('etroc1_data',
                                output_sqlite3_connection,
                                index=False,
                                if_exists='replace')
                 full_fit_df.to_sql('twc_fit_info',
+                               output_sqlite3_connection,
+                               index=False,
+                               if_exists='replace')
+                twc_df.to_sql('twc_info',
                                output_sqlite3_connection,
                                index=False,
                                if_exists='replace')
