@@ -15,6 +15,150 @@ import plotly.graph_objects as go
 from math import ceil
 from math import floor
 
+def make_2d_line_plot(
+    data_df: pandas.DataFrame,
+    run_name: str,
+    task_name: str,
+    base_path: Path,
+    plot_title: str,
+    x_var: str,
+    y_var: str,
+    file_name: str,
+    labels: dict[str, str],
+    full_html: bool = False,  # For saving a html containing only a div with the plot
+    color_var: str = None,
+    text_var: str = None,
+    x_error: str = None,
+    y_error: str = None,
+    subtitle: str = "",
+    extra_title: str = "",
+    ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if "accepted" in data_df:
+        df = data_df.query('accepted==True')
+    else:
+        df = data_df
+
+    fig = px.line(
+        data_df,
+        x=x_var,
+        y=y_var,
+        error_x=x_error,
+        error_y=y_error,
+        labels = labels,
+        title = "{}<br><sup>{}; Run: {}{}</sup>".format(plot_title, subtitle, run_name, extra_title),
+        markers=True,
+        text=text_var,
+        color=color_var,
+    )
+
+    fig.write_html(
+        base_path/'{}.html'.format(file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+def make_2d_scatter_plot(
+    data_df: pandas.DataFrame,
+    run_name: str,
+    task_name: str,
+    base_path: Path,
+    plot_title: str,
+    x_var: str,
+    y_var: str,
+    file_name: str,
+    labels: dict[str, str],
+    full_html: bool = False,  # For saving a html containing only a div with the plot
+    color_var: str = None,
+    text_var: str = None,
+    x_error: str = None,
+    y_error: str = None,
+    subtitle: str = "",
+    extra_title: str = "",
+    opacity: float = 1,
+    ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if "accepted" in data_df:
+        df = data_df.query('accepted==True')
+    else:
+        df = data_df
+
+    fig = px.scatter(
+        data_df,
+        x=x_var,
+        y=y_var,
+        error_x=x_error,
+        error_y=y_error,
+        labels = labels,
+        title = "{}<br><sup>{}; Run: {}{}</sup>".format(plot_title, subtitle, run_name, extra_title),
+        opacity=opacity,
+        text=text_var,
+        color=color_var,
+    )
+
+    fig.write_html(
+        base_path/'{}.html'.format(file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
+def make_histogram_plot(
+    data_df: pandas.DataFrame,
+    run_name: str,
+    task_name: str,
+    base_path: Path,
+    column_id,
+    axis_name: str,
+    variable_name: str,
+    file_name: str,
+    full_html: bool = False,  # For saving a html containing only a div with the plot
+    extra_title: str = "",
+    ):
+    if extra_title != "":
+        extra_title = "<br>" + extra_title
+
+    if "accepted" in data_df:
+        df = data_df.query('accepted==True')
+    else:
+        df = data_df
+
+    fig = go.Figure()
+    for board_id in sorted(df["data_board_id"].unique()):
+        fig.add_trace(go.Histogram(
+            x=df.loc[df["data_board_id"] == board_id][column_id],
+            name='Board {}'.format(board_id), # name used in legend and hover labels
+            opacity=0.5,
+            bingroup=1,
+        ))
+    fig.update_layout(
+        barmode='overlay',
+        title_text="Histogram of {}<br><sup>Run: {}{}</sup>".format(variable_name, run_name, extra_title),
+        xaxis_title_text=axis_name, # xaxis label
+        yaxis_title_text='Count', # yaxis label
+    )
+    #fig.update_yaxes(type="log")
+
+    fig.write_html(
+        base_path/'{}_histogram.html'.format(file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+    fig.update_traces(
+        histnorm="probability"
+    )
+    fig.update_layout(
+        yaxis_title_text='Probability', # yaxis label
+    )
+    fig.write_html(
+        base_path/'{}_pdf.html'.format(file_name),
+        full_html = full_html,
+        include_plotlyjs = 'cdn',
+    )
+
 def make_multi_scatter_plot(
     data_df:pandas.DataFrame,
     run_name: str,
