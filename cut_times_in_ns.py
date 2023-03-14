@@ -368,6 +368,8 @@ def apply_time_cuts(
 
     triggers_accepted_df = pandas.DataFrame({'accepted': True}, index=pivot_data_df.index)
     for idx, cut_row in time_cuts_df.iterrows():
+        if cut_row['cut_type'][0] == "#":  # If first character is #, then we skip the row
+            continue
         triggers_accepted_df = df_apply_time_cut_governor(
             triggers_accepted_df,
             pivot_data_df,
