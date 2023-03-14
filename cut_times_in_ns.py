@@ -169,6 +169,31 @@ def df_apply_corner_cut(
 
     return accepted_df
 
+def df_apply_1d_distance_cut(
+    accepted_df: pandas.DataFrame,
+    data_df: pandas.DataFrame,
+    cut_direction:str,
+    column_1:tuple,
+    center:str,
+    limit:str,
+    keep_nan:bool=False,
+    ):
+    if keep_nan:
+        extra_rows_to_keep = data_df[column_1].isna()
+    else:
+        extra_rows_to_keep = False
+
+    distance = (data_df[column_1] - center).abs()
+
+    if cut_direction == "inside":
+        accepted_df['accepted'] &= (distance < limit) | extra_rows_to_keep
+    elif cut_direction == "outside":
+        accepted_df['accepted'] &= (distance > limit) | extra_rows_to_keep
+    else:
+        raise RuntimeError("Unknown cut direction for 1d distance: {}".format(cut_direction))
+
+    return accepted_df
+
 def df_apply_time_cut_governor(
     accepted_df: pandas.DataFrame,
     data_df: pandas.DataFrame,
@@ -285,6 +310,16 @@ def df_apply_time_cut_governor(
             (variable_1, board_id_1),
             (variable_2, board_id_2),
             value_1,
+            keep_nan=keep_nan,
+        )
+    elif cut_type == "1d-dist":
+        return df_apply_1d_distance_cut(
+            accepted_df,
+            data_df,
+            cut_direction,
+            (variable_1, board_id_1),
+            value_1,
+            value_2,
             keep_nan=keep_nan,
         )
     else:
