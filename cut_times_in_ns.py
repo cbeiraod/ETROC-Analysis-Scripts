@@ -169,6 +169,31 @@ def df_apply_corner_cut(
 
     return accepted_df
 
+def df_apply_1d_distance_cut(
+    accepted_df: pandas.DataFrame,
+    data_df: pandas.DataFrame,
+    cut_direction:str,
+    column_1:tuple,
+    center:str,
+    limit:str,
+    keep_nan:bool=False,
+    ):
+    if keep_nan:
+        extra_rows_to_keep = data_df[column_1].isna()
+    else:
+        extra_rows_to_keep = False
+
+    distance = (data_df[column_1] - center).abs()
+
+    if cut_direction == "inside":
+        accepted_df['accepted'] &= (distance < limit) | extra_rows_to_keep
+    elif cut_direction == "outside":
+        accepted_df['accepted'] &= (distance > limit) | extra_rows_to_keep
+    else:
+        raise RuntimeError("Unknown cut direction for 1d distance: {}".format(cut_direction))
+
+    return accepted_df
+
 def df_apply_time_cut_governor(
     accepted_df: pandas.DataFrame,
     data_df: pandas.DataFrame,
@@ -287,6 +312,16 @@ def df_apply_time_cut_governor(
             value_1,
             keep_nan=keep_nan,
         )
+    elif cut_type == "1d-dist":
+        return df_apply_1d_distance_cut(
+            accepted_df,
+            data_df,
+            cut_direction,
+            (variable_1, board_id_1),
+            value_1,
+            value_2,
+            keep_nan=keep_nan,
+        )
     else:
         raise RuntimeError("Unknown cut type: {}".format(cut_type))
 
@@ -333,6 +368,8 @@ def apply_time_cuts(
 
     triggers_accepted_df = pandas.DataFrame({'accepted': True}, index=pivot_data_df.index)
     for idx, cut_row in time_cuts_df.iterrows():
+        if cut_row['cut_type'][0] == "#":  # If first character is #, then we skip the row
+            continue
         triggers_accepted_df = df_apply_time_cut_governor(
             triggers_accepted_df,
             pivot_data_df,
